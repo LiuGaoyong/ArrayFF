@@ -1,0 +1,129 @@
+[build-system]
+requires = ["uv_build>=0.11.15,<0.12"]
+build-backend = "uv_build"
+
+[project.urls]
+Homepage = "https://github.com/LiuGaoyong/ArrayFF"
+Repository = "https://github.com/LiuGaoyong/ArrayFF"
+Issues = "https://github.com/LiuGaoyong/ArrayFF/issues/"
+[project]
+name = "arrayff"
+version = "0.0.1"
+readme = "README.md"
+description = "The Force Field Library Based on Multiple Array Backends like NumPy, PyTorch and JAX."
+authors = [{ name = "LiuGaoyong", email = "liugaoyong_88@163.com" }]
+license-files = ["src/LICENSE"]
+license = "GPL-3.0-or-later"
+requires-python = ">=3.12"
+keywords = [
+    "chemistry",    #
+    "Force Field",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "ase",
+    "autoray",
+    "numpy>=2,<3",
+    "scipy>=1.10,<2",
+    "scikit-learn>=1.5",
+    "array-api-compat>=1.10",
+    "array_api-extra>=0.10",
+    "types-array-api>=1.0",
+    "typing-extensions",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.11",
+    "array-api-strict>=2.5", # for test
+    "pytest>=8.3",
+    "pytest-xdist",
+    "jupyterlab",
+    "chemiscope",
+    # "playwright>=1.52", # chemiscope [headless]
+    "nglview",
+]
+
+# uv config
+[tool.uv]
+package = true
+[[tool.uv.index]]
+url = "https://mirrors.cernet.edu.cn/pypi/web/simple" # CERNET
+# url = "https://mirrors.nju.edu.cn/pypi/web/simple" # NJU
+default = true
+# [[tool.uv.index]]
+# name = "pytorch-cpu"
+# url = "https://mirrors.nju.edu.cn/pytorch/whl/cpu/"
+# explicit = true
+# format = "flat"
+# [tool.uv.sources]
+# torch = [{ index = "pytorch-cpu" }]
+
+# pytest config
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error", # All other warnings are transformed into errors.
+    # ignore the following warnings that matching a regex
+    # example: "ignore:function ham\(\) is deprecated:DeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore::DeprecationWarning",
+    "ignore::pytest.PytestAssertRewriteWarning",
+    "ignore:unclosed file.*:ResourceWarning",
+
+]
+addopts = "--maxfail=1 -rf" # exit after 1 failures, report fail info
+testpaths = ["src/tests"]
+
+# ruff config
+[tool.ruff]
+line-length = 80
+indent-width = 4
+unsafe-fixes = true
+[tool.ruff.lint]
+select = ["F", "E", "W", "UP", "TID"]
+ignore = ["F722", "D100"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.pixi.package]
+
+[tool.pixi.package.build]
+backend = { name = "pixi-build-python", version = "*" }
+
+[tool.pixi.workspace]
+preview = ["pixi-build"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+
+[tool.pixi.pypi-dependencies]
+arrayff = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]
+test = "pytest -s -vv"
+benchmark = "pytest -s src/tests-benchmark/*.py"
+
+[tool.pixi.dependencies]
+python = ">=3.12"
+pytest = ">=8"
+array-api-compat = ">=1.15.0"
+array-api-extra = ">=0.11.0"
+array-api-strict = ">=2.5.0"
+autoray = ">=0.1.0"
+scikit-learn = ">=1.8.0"
+numpy = ">=2.0.0"
+scipy = ">=1.10.2"
+jupyterlab = ">=4.5.8"
+pytest-xdist = ">=3.8.0"
+nglview = ">=0.14.0"
+ruff = ">=0.11"
+chemiscope = ">=0.1.0"
+# types-array-api = ">=1.0.0"
+typing-extensions = ">=4.12.0"
