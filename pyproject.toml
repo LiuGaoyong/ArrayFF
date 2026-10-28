@@ -40,14 +40,14 @@ dependencies = [
 [project.optional-dependencies]
 torch = ["torch>=2.3"]
 jax = ["jax>=0.5"]
-numpy-ad = ["advect>=0.3,<0.4"]
+numpy-ad = ["advect>=0.3,<0.4; python_version < '3.16'"]
 
 [dependency-groups]
 dev = [
     "ruff>=0.11",
     "pymatgen>=2023.6",
     "array-api-strict>=2.5", # for test
-    "advect>=0.3,<0.4", # numpy backend autodiff
+    "advect>=0.3,<0.4; python_version < '3.16'", # numpy backend autodiff
     "pytest>=8.3",
     "pytest-xdist",
     "jupyterlab",
