@@ -37,6 +37,11 @@ dependencies = [
     "vesin",
 ]
 
+[project.optional-dependencies]
+torch = ["torch>=2.3"]
+jax = ["jax>=0.5"]
+numpy-ad = ["advect>=0.3,<0.4"]
+
 [dependency-groups]
 dev = [
     "ruff>=0.11",
