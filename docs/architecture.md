@@ -97,6 +97,17 @@ src/tests-benchmark/       timeit comparison across sizes and backends
 on numpy/torch/jax against the ASE calculators. ASE timings call
 `calc.calculate(atoms)` directly because ASE otherwise returns cached results.
 
+## Stress and neighbour skin
+
+- `Potential.stress(atoms)` returns the 3x3 stress tensor in eV/A^3 by central
+  finite differences of `E` under affine strain (12 energy evaluations). It
+  matches `ase.calculators.emt`/`lj` to 1e-10 and is exposed through
+  `ArrayFFCalculator` as `results["stress"]` (Voigt 6-vector).
+- `Potential(..., skin=0.5)` builds the table with `cutoff + skin` and reuses
+  it while no atom moved more than `skin / 2`; kernels mask pairs beyond the
+  physical cutoff, so the energy is unchanged. `clear_cache()` forces a
+  rebuild.
+
 ## Known limitations
 
 - EAM interpolation is linear; ASE uses cubic splines (energy agrees to ~1e-4
