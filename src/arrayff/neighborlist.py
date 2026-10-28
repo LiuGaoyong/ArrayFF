@@ -4,7 +4,7 @@ from typing import Literal
 import numpy as np
 from ase.atoms import Atoms
 from ase.cell import Cell
-from ase.geometry import minkowski_reduce, wrap_positions
+from ase.geometry import minkowski_reduce
 from ase.neighborlist import _calc_expansion as __ase_calc_expansion
 from ase.neighborlist import build_neighbor_list as __build_neighbor_list_ase
 from ase.neighborlist import neighbor_list as _ase_neighbor_list_3loop
@@ -82,35 +82,56 @@ def _sklearn_get_distance_pairs(
         shift = np.zeros((len(source), 3), int)
         return source, target, shift, dist
     else:
-        rcell, _ = minkowski_reduce(cell)
-        p1 = wrap_positions(p1, rcell, eps=0)
-        if p2 is not None:
-            p2 = np.asarray(p2, dtype=float)
-            p2 = wrap_positions(p2, rcell, eps=0)
-        assert max_distance != float("inf"), (
+        assert np.isfinite(max_distance), (
             "max_distance must be finite for periodic cell."
         )
+        # The Minkowski-reduced cell is used for the periodic expansion,
+        # while the returned shift vectors are expressed in the original cell.
+        rcell, op = minkowski_reduce(cell)
+        rcell = np.asarray(rcell, dtype=float)
+        op = np.asarray(op, dtype=int)
+        p1 = np.asarray(p1, dtype=float)
+        if p2 is None:
+            p2 = p1
+        else:
+            p2 = np.asarray(p2, dtype=float)
+        l1 = p1.shape[0]
+        # Wrap the points into the reduced cell and record the integer cell
+        # offsets, i.e. p_wrapped = p + offset @ rcell.
+        inv_rcell = np.linalg.pinv(rcell)
+        offset1 = -np.floor(p1 @ inv_rcell).astype(int)
+        offset2 = -np.floor(p2 @ inv_rcell).astype(int)
+        p1_wrapped = p1 + offset1 @ rcell
+        p2_wrapped = p2 + offset2 @ rcell
+        # Enumerate all the periodic images of the first points set.
         pbc = np.asarray([True, True, True])
         n = __ase_calc_expansion(rcell, pbc, max_distance / 2)
         nrange3 = [range(-i, i + 1) for i in n]
-        arr_shift = np.empty((0, 3), int)
-        arr_p1 = np.empty((0, 3), float)
-        for n1, n2, n3 in itertools.product(*nrange3):
-            shift_idxs = np.array([n1, n2, n3])
-            arr_p1 = np.vstack([arr_p1, p1 + shift_idxs @ cell])
-            arr_shift = np.vstack([arr_shift, shift_idxs.astype(int)])
+        shift_vectors = np.array(list(itertools.product(*nrange3)), dtype=int)
+        arr_p1 = p1_wrapped[None, :, :] + (shift_vectors @ rcell)[:, None, :]
+        arr_p1 = arr_p1.reshape(-1, 3)
         source, target, dist = _sklearn_query_ball_point(
             p1=arr_p1,
-            p2=p2,
+            p2=p2_wrapped,
             max_distance=max_distance,
             return_distance=bool(return_distance),
         )
-        print(arr_shift)
-        print(source, len(p1), len(arr_shift))
-        source, shift_idx = np.divmod(source, len(arr_shift))
-        print(source, shift_idx)
-        source, shift = source.astype(int), arr_shift[shift_idx]
-        return source, target, shift, dist
+        image_idx, source = np.divmod(source, l1)
+        # The distance vector in the reduced cell is
+        #     D = p2[target] - p1[source] + shift_rcell @ rcell,
+        # and it is converted to the original cell by `rcell = op @ cell`,
+        # i.e. shift = shift_rcell @ op, so that
+        #     D = p2[target] - p1[source] + shift @ cell
+        shift_rcell = (
+            offset2[target] - offset1[source] - shift_vectors[image_idx]
+        )
+        shift = shift_rcell @ op
+        return (
+            source.astype(int),
+            target.astype(int),
+            shift.astype(int),
+            dist,
+        )
 
 
 #############################################################

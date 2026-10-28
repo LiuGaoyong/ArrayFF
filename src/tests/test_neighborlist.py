@@ -12,7 +12,7 @@ from arrayff.neighborlist import (
 )
 
 _LST_2 = ["vesin", "matscipy"]
-_LST_1 = ["sklearn", "pymatgen"]
+_LST_1 = ["pymatgen", "sklearn"]
 
 
 def test_sklearn_query_ball_point() -> None:
@@ -190,6 +190,19 @@ class TestNeighborList:
             backend=str(backend).lower(),
             cutoff=3.0,
             idx=[0, 1],
+        )
+
+    def test_neighbor_list_for_atoms_general_pbc(self, backend: str) -> None:
+        self._test_neighbor_list_for_atoms(
+            atoms=Atoms(
+                "H4",
+                positions=np.random.rand(4, 3),
+                cell=np.random.rand(3, 3),
+                pbc=np.ones(3, dtype=bool),
+            ),
+            backend=str(backend).lower(),
+            cutoff=0.5,
+            idx=[0],
         )
 
 
