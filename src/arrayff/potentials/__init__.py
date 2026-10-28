@@ -10,6 +10,7 @@ from arrayff.potentials.base import Potential
 from arrayff.potentials.eam import EAM
 from arrayff.potentials.emt import EMT
 from arrayff.potentials.lj import LennardJones
+from arrayff.potentials.placeholders import MEAM, UF3
 from arrayff.potentials.registry import (
     available_potentials,
     get_potential,
@@ -18,6 +19,8 @@ from arrayff.potentials.registry import (
 
 __all__ = [
     "EAM",
+    "MEAM",
+    "UF3",
     "EMT",
     "LennardJones",
     "Potential",
