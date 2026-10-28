@@ -77,3 +77,26 @@ def to_backend(array: Any, backend: str) -> Any:
 
         return advect.asarray(array)
     raise ValueError(f"Unknown backend: {backend!r}")
+
+
+def to_numpy(array: Any) -> Any:
+    """Convert a backend array to ``numpy`` (detaching any autograd graph)."""
+    register_advect_alias()
+    import numpy as np
+
+    if isinstance(array, np.ndarray):
+        return array
+    backend = ar.infer_backend(array)
+    if backend == "torch":
+        return array.detach().cpu().numpy()
+    if backend == "jax":
+        return np.asarray(array)
+    return np.asarray(array)
+
+
+def dtype_of(array: Any) -> Any:
+    """Return the dtype of ``array`` (untouched, backend object)."""
+    dtype = getattr(array, "dtype", None)
+    if dtype is None:
+        return "float64"
+    return dtype

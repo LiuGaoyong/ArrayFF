@@ -11,9 +11,11 @@ from arrayff.utils.backend import (
 )
 from arrayff.utils.dispatch import (
     do,
+    dtype_of,
     register_advect_alias,
     require_same_backend,
     to_backend,
+    to_numpy,
 )
 from arrayff.utils.exceptions import (
     ArrayFFError,
@@ -32,6 +34,7 @@ __all__ = [
     "available_backends",
     "default_dtype",
     "do",
+    "dtype_of",
     "enable_x64",
     "infer_backend",
     "jit",
@@ -39,5 +42,6 @@ __all__ = [
     "require_same_backend",
     "resolve_ad_backend",
     "to_backend",
+    "to_numpy",
     "x64_enabled",
 ]

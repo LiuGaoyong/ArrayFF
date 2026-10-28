@@ -8,7 +8,19 @@ import a concrete array library.
 from __future__ import annotations
 
 from arrayff import ad, utils
+from arrayff.potentials import (
+    LennardJones,
+    available_potentials,
+    get_potential,
+)
 
 __version__ = "0.0.1"
 
-__all__ = ["__version__", "ad", "utils"]
+__all__ = [
+    "LennardJones",
+    "__version__",
+    "ad",
+    "available_potentials",
+    "get_potential",
+    "utils",
+]
