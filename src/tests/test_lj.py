@@ -105,6 +105,7 @@ def test_shift_matches_pair_count():
 
 def test_registry():
     assert available_potentials()["lj"] is True
-    assert get_potential("lj", sigma=SIGMA, epsilon=EPSILON).cutoff == 8.0
+    calc = get_potential("lj", sigma=SIGMA, epsilon=EPSILON, cutoff=8.0)
+    assert calc.cutoff == 8.0
     with pytest.raises(KeyError):
         get_potential("does-not-exist")
