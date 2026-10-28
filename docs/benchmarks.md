@@ -60,6 +60,17 @@ compile time shown separately.
 | EAM | numpy | 52.33 | 0.0381 |
 | EAM | torch | 40.51 | 0.0295 |
 
+## Neighbour builder (EMT, numpy backend, cache cleared each call)
+
+| N | sklearn | vesin | matscipy |
+|---|---|---|---|
+| 108 | 5.35 ms | 4.35 ms | 6.93 ms |
+| 500 | 18.5 ms | 10.6 ms | 13.3 ms |
+| 1372 | 53.8 ms | 28.5 ms | 36.8 ms |
+
+`Potential(..., builder="vesin")` nearly halves the wall time; the default
+stays `"sklearn"` because that is the package's own reference implementation.
+
 ## Reading the numbers
 
 - Eager arrayff is 1.5-3x faster than the ASE calculators.
@@ -71,3 +82,7 @@ compile time shown separately.
 - `jax-jit` is 30-70x faster than the numpy kernel, but it excludes neighbour
   construction and `Atoms` conversion, so it is an upper bound rather than a
   drop-in replacement.
+- `Potential` caches the neighbour table for an unchanged geometry
+  (`clear_cache()` forces a rebuild). Benchmarks clear it because MD positions
+  change every step.
+- Switching the builder to `vesin` is the cheapest large win so far.
