@@ -52,13 +52,19 @@ class Potential(abc.ABC):
         dtype: Any = None,
         max_neighbors: int | None = None,
         builder: str = "sklearn",
+        skin: float = 0.0,
     ) -> None:
         self.cutoff = float(cutoff)
         self.backend = backend
         self.dtype = dtype
         self.max_neighbors = max_neighbors
         self.builder = builder
-        self._table_cache: tuple[Any, NeighborTable] | None = None
+        self.skin = float(skin)
+        if self.skin < 0.0:
+            raise ValueError("skin must be non-negative")
+        self._table_static: tuple | None = None
+        self._table_positions: np.ndarray | None = None
+        self._table_cache: NeighborTable | None = None
 
     # -- to be implemented by subclasses ---------------------------------------
     @abc.abstractmethod
@@ -98,9 +104,8 @@ class Potential(abc.ABC):
             self.element_parameters(elements),
         )
 
-    def _table_key(self, atoms: Atoms) -> tuple:
+    def _table_static_key(self, atoms: Atoms) -> tuple:
         digest = hashlib.blake2b(digest_size=16)
-        digest.update(np.asarray(atoms.positions, dtype=np.float64).tobytes())
         digest.update(np.asarray(atoms.cell.array, dtype=np.float64).tobytes())
         digest.update(np.asarray(atoms.pbc, dtype=bool).tobytes())
         digest.update(np.asarray(atoms.numbers, dtype=np.int64).tobytes())
@@ -110,26 +115,87 @@ class Potential(abc.ABC):
             self.max_neighbors,
             self.builder,
             self.backend,
+            self.skin,
         )
 
     def _table(self, atoms: Atoms) -> NeighborTable:
-        """Return the neighbour table, cached for an unchanged geometry."""
-        key = self._table_key(atoms)
-        if self._table_cache is not None and self._table_cache[0] == key:
-            return self._table_cache[1]
+        """Return the neighbour table, cached according to ``skin``.
+
+        * ``skin == 0``: reuse only when the geometry is bitwise unchanged.
+        * ``skin > 0``: build with ``cutoff + skin`` and reuse while no atom
+          moved more than ``skin / 2`` (the standard rebuild criterion).
+        """
+        static = self._table_static_key(atoms)
+        positions = np.asarray(atoms.positions, dtype=np.float64)
+        if (
+            self._table_cache is not None
+            and self._table_static == static
+            and self._table_positions is not None
+        ):
+            displacement = float(
+                np.linalg.norm(positions - self._table_positions, axis=1).max(
+                    initial=0.0
+                )
+            )
+            tolerance = self.skin / 2.0 if self.skin > 0.0 else 0.0
+            if displacement <= tolerance:
+                return self._table_cache
+
         table = neighbor_table(
             atoms,
-            self._cutoff_for(atoms),
+            self._cutoff_for(atoms) + self.skin,
             max_neighbors=self.max_neighbors,
             backend=self.backend,
             builder=self.builder,
         )
-        self._table_cache = (key, table)
+        self._table_static = static
+        self._table_positions = positions.copy()
+        self._table_cache = table
         return table
+
+    def stress(self, atoms: Atoms, step: float = 1e-5) -> np.ndarray:
+        """Return the 3x3 stress tensor in eV/Angstrom^3.
+
+        Computed by central finite differences of the energy under affine
+        strain ``r -> r (1 + eps)``, ``cell -> cell (1 + eps)``. This is
+        backend agnostic and costs twelve energy evaluations.
+        """
+        if atoms.cell.rank != 3:
+            raise ValueError("stress requires a fully periodic cell")
+        volume = float(atoms.get_volume())
+        positions = np.asarray(atoms.positions, dtype=np.float64)
+        cell = np.asarray(atoms.cell.array, dtype=np.float64)
+        identity = np.eye(3)
+        voigt = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
+        derivative = np.zeros(6)
+        for index, (a, b) in enumerate(voigt):
+            for sign in (1.0, -1.0):
+                strain = np.zeros((3, 3))
+                strain[a, b] = sign * step
+                if a != b:
+                    strain[b, a] = sign * step
+                moved = atoms.copy()
+                moved.set_cell(cell @ (identity + strain), scale_atoms=False)
+                moved.positions = positions @ (identity + strain)
+                self.clear_cache()
+                energy = self.energy(moved)
+                derivative[index] += sign * energy / (2.0 * step)
+            if a != b:
+                derivative[index] *= 0.5
+        sigma = derivative / volume
+        return np.array(
+            [
+                [sigma[0], sigma[5], sigma[4]],
+                [sigma[5], sigma[1], sigma[3]],
+                [sigma[4], sigma[3], sigma[2]],
+            ]
+        )
 
     def clear_cache(self) -> None:
         """Drop the cached neighbour table."""
         self._table_cache = None
+        self._table_positions = None
+        self._table_static = None
 
     def energy(self, atoms: Atoms) -> float:
         """Return the total energy in eV."""

@@ -66,6 +66,7 @@ class LennardJones(Potential):
         dtype: Any = None,
         max_neighbors: int | None = None,
         builder: str = "sklearn",
+        skin: float = 0.0,
     ) -> None:
         self.kim = sigma is None and epsilon is None
         if self.kim:
@@ -88,6 +89,7 @@ class LennardJones(Potential):
             dtype=dtype,
             max_neighbors=max_neighbors,
             builder=builder,
+            skin=skin,
         )
         self.sigma = sigma
         self.epsilon = epsilon
@@ -164,7 +166,7 @@ class LennardJones(Potential):
         if self.kim:
             inside = do("logical_and", mask, distance < cutoff_ij)
         else:
-            inside = mask
+            inside = do("logical_and", mask, distance < self.cutoff)
 
         sr6 = (sigma_ij / distance) ** 6
         energy = 4.0 * epsilon_ij * (sr6 * sr6 - sr6)

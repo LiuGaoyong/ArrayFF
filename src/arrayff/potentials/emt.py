@@ -93,6 +93,7 @@ class EMT(Potential):
         dtype: Any = None,
         max_neighbors: int | None = None,
         builder: str = "sklearn",
+        skin: float = 0.0,
     ) -> None:
         self.asap_cutoff = bool(asap_cutoff)
         self.rc, rc_list, self.acut = _cutoff(self.asap_cutoff, None)
@@ -102,6 +103,7 @@ class EMT(Potential):
             dtype=dtype,
             max_neighbors=max_neighbors,
             builder=builder,
+            skin=skin,
         )
 
     def _cutoff_for(self, atoms) -> float:
@@ -178,15 +180,16 @@ class EMT(Potential):
         distance = pair_distances(positions, table, cell)
         distance = do("where", mask, distance, 1.0)
 
+        inside = do("logical_and", mask, distance < self.cutoff)
         weight = 1.0 / (1.0 + do("exp", self.acut * (distance - self.rc)))
-        weight = do("where", mask, weight, 0.0)
+        weight = do("where", inside, weight, 0.0)
 
         sigma1 = do(
             "sum",
             do("exp", -eta2_j * (distance - beta * s0_j)) * chi * weight,
             axis=-1,
         )
-        has_neighbor = do("any", mask, axis=-1)
+        has_neighbor = do("any", inside, axis=-1)
 
         inv12gamma1 = params["inv12gamma1"][species]
         sigma1_safe = do("where", has_neighbor, sigma1, 1.0)

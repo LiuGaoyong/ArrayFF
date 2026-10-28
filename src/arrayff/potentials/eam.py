@@ -42,6 +42,7 @@ class EAM(Potential):
         dtype: Any = None,
         max_neighbors: int | None = None,
         builder: str = "sklearn",
+        skin: float = 0.0,
     ) -> None:
         self.table: EAMTable = read_setfl(potential)
         super().__init__(
@@ -50,6 +51,7 @@ class EAM(Potential):
             dtype=dtype,
             max_neighbors=max_neighbors,
             builder=builder,
+            skin=skin,
         )
 
     def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
@@ -89,18 +91,19 @@ class EAM(Potential):
         distance = do("where", mask, distance, 1.0)
 
         # phi_a,b(r) = (r * phi)(r) / r
+        inside = do("logical_and", mask, distance < self.cutoff)
         pair_rows = centre * size + species_j
         rphi = interp_rows(
             params["rphi"], pair_rows, distance, 0.0, params["dr"]
         )
-        pair_energy = do("sum", do("where", mask, rphi / distance, 0.0))
+        pair_energy = do("sum", do("where", inside, rphi / distance, 0.0))
         pair_energy = 0.5 * pair_energy
 
         # rho_i = sum_j rho_{a_j}(r_ij)
         density = interp_rows(
             params["density"], species_j, distance, 0.0, params["dr"]
         )
-        density = do("sum", do("where", mask, density, 0.0), axis=-1)
+        density = do("sum", do("where", inside, density, 0.0), axis=-1)
 
         embedding = interp_rows(
             params["embedded"], species, density, 0.0, params["drho"]

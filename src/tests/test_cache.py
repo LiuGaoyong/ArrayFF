@@ -65,3 +65,39 @@ def test_potential_with_vesin_builder_matches_default():
     assert EMT(builder="vesin").energy(atoms) == pytest.approx(
         reference, rel=1e-12
     )
+
+
+def test_skin_does_not_change_the_energy():
+    atoms = _atoms()
+    for cls in (EMT,):
+        reference = cls().energy(atoms)
+        assert cls(skin=0.6).energy(atoms) == pytest.approx(
+            reference, rel=1e-12
+        )
+
+
+def test_skin_reuses_table_for_small_moves():
+    atoms = _atoms()
+    calc = EMT(skin=0.6)
+    first = calc._table(atoms)
+    atoms.positions[0, 0] += 0.05  # below skin / 2
+    assert calc._table(atoms) is first
+
+
+def test_skin_rebuilds_after_large_move():
+    atoms = _atoms()
+    calc = EMT(skin=0.6)
+    first = calc._table(atoms)
+    atoms.positions[0, 0] += 0.5  # above skin / 2
+    assert calc._table(atoms) is not first
+
+
+def test_skin_with_kim_lj_per_pair_cutoff():
+    pytest.importorskip("ase")
+    atoms = bulk("Ar", "fcc", a=5.26, cubic=True).repeat((2, 2, 2))
+    from arrayff.potentials import LennardJones
+
+    reference = LennardJones().energy(atoms)
+    assert LennardJones(skin=0.7).energy(atoms) == pytest.approx(
+        reference, rel=1e-12
+    )

@@ -24,7 +24,7 @@ __all__ = [
 class ArrayFFCalculator(Calculator):
     """Wrap any arrayff potential as an ASE calculator."""
 
-    implemented_properties = ["energy", "forces", "charges"]
+    implemented_properties = ["energy", "forces", "stress", "charges"]
 
     def __init__(self, potential: Any = None, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -41,6 +41,12 @@ class ArrayFFCalculator(Calculator):
         self.results["energy"] = energy
         self.results["free_energy"] = energy
         self.results["forces"] = forces
+        if "stress" in properties and hasattr(self.potential, "stress"):
+            from ase.stress import full_3x3_to_voigt_6_stress
+
+            self.results["stress"] = full_3x3_to_voigt_6_stress(
+                self.potential.stress(self.atoms)
+            )
         if hasattr(self.potential, "charges"):
             self.results["charges"] = self.potential.charges(self.atoms)
 
