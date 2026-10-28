@@ -23,6 +23,12 @@ def pair_vectors(positions: Any, table: NeighborTable, cell: Any) -> Any:
 
 
 def pair_distances(positions: Any, table: NeighborTable, cell: Any) -> Any:
-    """Return the ``(N, M)`` pair distances (padding entries are bogus)."""
+    """Return the ``(N, M)`` pair distances.
+
+    Padding entries are replaced by ``1.0`` *before* the square root so that
+    autodiff never evaluates ``1 / sqrt(0)`` (which would give ``0 * inf``).
+    """
     vectors = pair_vectors(positions, table, cell)
-    return do("sqrt", do("sum", vectors * vectors, axis=-1))
+    squared = do("sum", vectors * vectors, axis=-1)
+    squared = do("where", table.mask, squared, 1.0)
+    return do("sqrt", squared)

@@ -71,6 +71,10 @@ class Potential(abc.ABC):
         """Return the total energy as a scalar array."""
 
     # -- pipeline -----------------------------------------------------------
+    def _cutoff_for(self, atoms: Atoms) -> float:
+        """Return the neighbour table cutoff for ``atoms``."""
+        return self.cutoff
+
     def _context(self, atoms: Atoms) -> tuple:
         elements, species_np = species_of(atoms.numbers)
         positions, _, cell, pbc = atoms_to_arrays(
@@ -79,7 +83,7 @@ class Potential(abc.ABC):
         species = to_backend(species_np, self.backend)
         table = neighbor_table(
             atoms,
-            self.cutoff,
+            self._cutoff_for(atoms),
             max_neighbors=self.max_neighbors,
             backend=self.backend,
         )
