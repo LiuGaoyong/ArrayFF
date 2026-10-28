@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main, framework]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: |
+          uv pip install --system -e ".[torch,jax,numpy-ad]"
+          uv pip install --system pytest pytest-xdist ruff
+
+      - name: Lint
+        run: ruff check src
+
+      - name: Test
+        run: pytest -q -n auto
+
+  benchmark:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          uv pip install --system -e ".[torch,jax,numpy-ad]"
+          uv pip install --system pytest
+      - name: Timing table
+        run: pytest -s src/tests-benchmark/bench_potentials.py -q
