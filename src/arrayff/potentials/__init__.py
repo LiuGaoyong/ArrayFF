@@ -7,6 +7,7 @@ UF3 (see :func:`arrayff.potentials.registry.available_potentials`).
 from __future__ import annotations
 
 from arrayff.potentials.base import Potential
+from arrayff.potentials.eam import EAM
 from arrayff.potentials.emt import EMT
 from arrayff.potentials.lj import LennardJones
 from arrayff.potentials.registry import (
@@ -16,6 +17,7 @@ from arrayff.potentials.registry import (
 )
 
 __all__ = [
+    "EAM",
     "EMT",
     "LennardJones",
     "Potential",

@@ -107,7 +107,7 @@ class EMT(Potential):
             return self.cutoff
         return _cutoff(True, np.asarray(atoms.numbers))[1]
 
-    def _parameters(self, elements: np.ndarray) -> dict[str, Any]:
+    def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
         rows = []
         for z in elements:
             symbol = chemical_symbols[int(z)]

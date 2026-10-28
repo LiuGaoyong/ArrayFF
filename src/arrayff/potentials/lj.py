@@ -96,7 +96,7 @@ class LennardJones(Potential):
         present = np.unique(np.asarray(atoms.numbers, dtype=np.int64))
         return max(KIM_LJ_PARAMETERS[int(z)][0] for z in present)
 
-    def _parameters(self, elements: np.ndarray) -> dict[str, Any]:
+    def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
         if self.kim:
             try:
                 values = [KIM_LJ_PARAMETERS[int(z)] for z in elements]

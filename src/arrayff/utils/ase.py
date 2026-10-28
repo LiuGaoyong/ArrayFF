@@ -31,14 +31,23 @@ def atoms_to_arrays(
         raise TypeError(
             f"Expected an ase.Atoms instance, got {type(atoms).__name__}"
         )
-    positions = np.asarray(atoms.positions, dtype=dtype or np.float64)
+    positions = np.asarray(atoms.positions, dtype=np.float64)
     numbers = np.asarray(atoms.numbers, dtype=np.int64)
-    cell = np.asarray(atoms.cell.array, dtype=dtype or np.float64)
+    cell = np.asarray(atoms.cell.array, dtype=np.float64)
     pbc = np.asarray(atoms.pbc, dtype=bool)
+    positions_b = to_backend(positions, backend)
+    cell_b = to_backend(cell, backend)
+    if dtype is not None:
+        if backend == "torch":
+            positions_b = positions_b.to(dtype)
+            cell_b = cell_b.to(dtype)
+        else:
+            positions_b = positions_b.astype(dtype)
+            cell_b = cell_b.astype(dtype)
     return (
-        to_backend(positions, backend),
+        positions_b,
         to_backend(numbers, backend),
-        to_backend(cell, backend),
+        cell_b,
         to_backend(pbc, backend),
     )
 

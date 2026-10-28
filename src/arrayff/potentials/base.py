@@ -55,7 +55,7 @@ class Potential(abc.ABC):
 
     # -- to be implemented by subclasses ---------------------------------------
     @abc.abstractmethod
-    def _parameters(self, elements: np.ndarray) -> dict[str, Any]:
+    def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
         """Return backend arrays of the parameters for ``elements``."""
 
     @abc.abstractmethod
@@ -87,7 +87,14 @@ class Potential(abc.ABC):
             max_neighbors=self.max_neighbors,
             backend=self.backend,
         )
-        return positions, species, table, cell, pbc, self._parameters(elements)
+        return (
+            positions,
+            species,
+            table,
+            cell,
+            pbc,
+            self.element_parameters(elements),
+        )
 
     def energy(self, atoms: Atoms) -> float:
         """Return the total energy in eV."""
