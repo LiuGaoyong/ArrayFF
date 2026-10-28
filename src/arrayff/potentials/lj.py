@@ -65,6 +65,7 @@ class LennardJones(Potential):
         backend: str = "numpy",
         dtype: Any = None,
         max_neighbors: int | None = None,
+        builder: str = "sklearn",
     ) -> None:
         self.kim = sigma is None and epsilon is None
         if self.kim:
@@ -86,6 +87,7 @@ class LennardJones(Potential):
             backend=backend,
             dtype=dtype,
             max_neighbors=max_neighbors,
+            builder=builder,
         )
         self.sigma = sigma
         self.epsilon = epsilon

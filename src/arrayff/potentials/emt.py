@@ -92,6 +92,7 @@ class EMT(Potential):
         backend: str = "numpy",
         dtype: Any = None,
         max_neighbors: int | None = None,
+        builder: str = "sklearn",
     ) -> None:
         self.asap_cutoff = bool(asap_cutoff)
         self.rc, rc_list, self.acut = _cutoff(self.asap_cutoff, None)
@@ -100,6 +101,7 @@ class EMT(Potential):
             backend=backend,
             dtype=dtype,
             max_neighbors=max_neighbors,
+            builder=builder,
         )
 
     def _cutoff_for(self, atoms) -> float:

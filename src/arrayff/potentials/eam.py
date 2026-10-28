@@ -41,6 +41,7 @@ class EAM(Potential):
         backend: str = "numpy",
         dtype: Any = None,
         max_neighbors: int | None = None,
+        builder: str = "sklearn",
     ) -> None:
         self.table: EAMTable = read_setfl(potential)
         super().__init__(
@@ -48,6 +49,7 @@ class EAM(Potential):
             backend=backend,
             dtype=dtype,
             max_neighbors=max_neighbors,
+            builder=builder,
         )
 
     def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:

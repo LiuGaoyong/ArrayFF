@@ -78,7 +78,12 @@ def _ase_case(name: str, atoms):
 
 
 def _arrayff_case(potential, atoms):
-    return _time(lambda: potential.energy_and_forces(atoms))
+    # Positions change every MD step, so force a table rebuild (cache miss).
+    def run():
+        potential.clear_cache()
+        potential.energy_and_forces(atoms)
+
+    return _time(run)
 
 
 def _jax_jit_case(potential, atoms):
@@ -125,6 +130,39 @@ def _rows():
             except ImportError:
                 continue
         rows.append((n, "EMT", "ASE", None, _ase_case("emt", cu_atoms), n))
+        for builder in ("vesin", "matscipy"):
+            try:
+                rows.append(
+                    (
+                        n,
+                        "EMT",
+                        f"numpy+{builder}",
+                        None,
+                        _arrayff_case(EMT(builder=builder), cu_atoms),
+                        n,
+                    )
+                )
+                rows.append(
+                    (
+                        n,
+                        "LJ",
+                        f"numpy+{builder}",
+                        None,
+                        _arrayff_case(
+                            LennardJones(
+                                cutoff=8.0,
+                                sigma=3.405,
+                                epsilon=0.01032,
+                                shift=True,
+                                builder=builder,
+                            ),
+                            ar_atoms,
+                        ),
+                        n,
+                    )
+                )
+            except Exception:
+                continue
         for backend in ("numpy", "torch", "jax"):
             try:
                 rows.append(

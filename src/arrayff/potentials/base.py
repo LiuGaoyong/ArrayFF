@@ -10,6 +10,7 @@ via :mod:`arrayff.ad`.
 from __future__ import annotations
 
 import abc
+import hashlib
 from typing import Any
 
 import numpy as np
@@ -36,6 +37,9 @@ class Potential(abc.ABC):
         Floating point dtype used when converting the ``Atoms`` positions.
     max_neighbors:
         Fixed neighbour-table width; required to keep shapes static for JAX.
+    builder:
+        Neighbour list implementation: ``"sklearn"`` (default), ``"vesin"``,
+        ``"matscipy"``, ``"pymatgen"`` or ``"ase_kdtree"``.
     """
 
     name: str = "potential"
@@ -47,11 +51,14 @@ class Potential(abc.ABC):
         backend: str = "numpy",
         dtype: Any = None,
         max_neighbors: int | None = None,
+        builder: str = "sklearn",
     ) -> None:
         self.cutoff = float(cutoff)
         self.backend = backend
         self.dtype = dtype
         self.max_neighbors = max_neighbors
+        self.builder = builder
+        self._table_cache: tuple[Any, NeighborTable] | None = None
 
     # -- to be implemented by subclasses ---------------------------------------
     @abc.abstractmethod
@@ -81,12 +88,7 @@ class Potential(abc.ABC):
             atoms, self.backend, self.dtype
         )
         species = to_backend(species_np, self.backend)
-        table = neighbor_table(
-            atoms,
-            self._cutoff_for(atoms),
-            max_neighbors=self.max_neighbors,
-            backend=self.backend,
-        )
+        table = self._table(atoms)
         return (
             positions,
             species,
@@ -95,6 +97,39 @@ class Potential(abc.ABC):
             pbc,
             self.element_parameters(elements),
         )
+
+    def _table_key(self, atoms: Atoms) -> tuple:
+        digest = hashlib.blake2b(digest_size=16)
+        digest.update(np.asarray(atoms.positions, dtype=np.float64).tobytes())
+        digest.update(np.asarray(atoms.cell.array, dtype=np.float64).tobytes())
+        digest.update(np.asarray(atoms.pbc, dtype=bool).tobytes())
+        digest.update(np.asarray(atoms.numbers, dtype=np.int64).tobytes())
+        return (
+            digest.hexdigest(),
+            self._cutoff_for(atoms),
+            self.max_neighbors,
+            self.builder,
+            self.backend,
+        )
+
+    def _table(self, atoms: Atoms) -> NeighborTable:
+        """Return the neighbour table, cached for an unchanged geometry."""
+        key = self._table_key(atoms)
+        if self._table_cache is not None and self._table_cache[0] == key:
+            return self._table_cache[1]
+        table = neighbor_table(
+            atoms,
+            self._cutoff_for(atoms),
+            max_neighbors=self.max_neighbors,
+            backend=self.backend,
+            builder=self.builder,
+        )
+        self._table_cache = (key, table)
+        return table
+
+    def clear_cache(self) -> None:
+        """Drop the cached neighbour table."""
+        self._table_cache = None
 
     def energy(self, atoms: Atoms) -> float:
         """Return the total energy in eV."""
