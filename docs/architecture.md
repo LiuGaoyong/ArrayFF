@@ -67,3 +67,41 @@ Plain numpy primals are routed to `advect` automatically.
   compared against ASE's official calculators or analytic values.
 - `src/tests-benchmark`: several system sizes, `timeit.repeat` medians,
   compared across backends and against ASE implementations.
+
+## Implemented vs planned
+
+| Model | State | Reference used |
+|---|---|---|
+| Lennard-Jones | implemented | OpenKIM `LennardJones612_UniversalShifted__MO_959249795837_003`; mixing per the Adsorption `array-api-calculator` branch |
+| EMT | implemented | `ase.calculators.emt` (vectorised, autodiff forces) |
+| EAM | implemented | `ase.calculators.eam` setfl format |
+| QEq | implemented | DMFF `admp/qeq.py` structure (shielded kernel, extended matrix, detached charges) |
+| MEAM, UF3 | placeholders | registered with `implemented=False` |
+| EEM, PQEq | placeholders | `ScopeError` on construction |
+
+## Package layout additions
+
+```
+arrayff/ops/interp.py      differentiable table lookup (advect custom primitive)
+arrayff/io/eam.py          setfl (alloy) reader
+arrayff/electrostatics/    QEq + placeholders
+arrayff/calculators/ase.py ASE Calculator adapters
+arrayff/nn/                optional torch modules (trainable LJ)
+src/tests-benchmark/       timeit comparison across sizes and backends
+```
+
+## Benchmarks
+
+`pytest -s src/tests-benchmark/bench_potentials.py` prints median
+`energy_and_forces` timings for fcc Ar/Cu cells (108/500/1372 atoms), arrayff
+on numpy/torch/jax against the ASE calculators. ASE timings call
+`calc.calculate(atoms)` directly because ASE otherwise returns cached results.
+
+## Known limitations
+
+- EAM interpolation is linear; ASE uses cubic splines (energy agrees to ~1e-4
+  relative, forces to 1e-8).
+- QEq uses the algebraic shielded kernel; DMFF's Gaussian `erfc` kernel would
+  need an `erf` primitive.
+- The Advect path routes forces through custom primitives for table lookups;
+  MEAM/UF3 will need the same treatment.

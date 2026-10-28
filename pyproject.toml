@@ -47,6 +47,7 @@ dev = [
     "ruff>=0.11",
     "pymatgen>=2023.6",
     "array-api-strict>=2.5", # for test
+    "advect>=0.3,<0.4", # numpy backend autodiff
     "pytest>=8.3",
     "pytest-xdist",
     "jupyterlab",
