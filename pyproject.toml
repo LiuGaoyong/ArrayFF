@@ -34,11 +34,13 @@ dependencies = [
     "array_api-extra>=0.10",
     "types-array-api>=1.0",
     "typing-extensions",
+    "vesin",
 ]
 
 [dependency-groups]
 dev = [
     "ruff>=0.11",
+    "pymatgen>=2023.6",
     "array-api-strict>=2.5", # for test
     "pytest>=8.3",
     "pytest-xdist",
@@ -46,22 +48,18 @@ dev = [
     "chemiscope",
     # "playwright>=1.52", # chemiscope [headless]
     "nglview",
+    "jax>=0.5",
+    "torch>=2.10",
+    "matscipy",
 ]
 
 # uv config
 [tool.uv]
 package = true
 [[tool.uv.index]]
+name = "pypi"
 url = "https://mirrors.cernet.edu.cn/pypi/web/simple" # CERNET
-# url = "https://mirrors.nju.edu.cn/pypi/web/simple" # NJU
 default = true
-# [[tool.uv.index]]
-# name = "pytorch-cpu"
-# url = "https://mirrors.nju.edu.cn/pytorch/whl/cpu/"
-# explicit = true
-# format = "flat"
-# [tool.uv.sources]
-# torch = [{ index = "pytorch-cpu" }]
 
 # pytest config
 [tool.pytest.ini_options]
@@ -127,3 +125,16 @@ ruff = ">=0.11"
 chemiscope = ">=0.1.0"
 # types-array-api = ">=1.0.0"
 typing-extensions = ">=4.12.0"
+pytorch = ">=2.3.0"
+opt_einsum = ">=0.1.0"
+ml_dtypes = ">=0.1.0"
+python-vesin = ">=0.1.0"
+pymatgen = ">=2023.6"
+
+[tool.pixi.target.osx-arm64.dependencies]
+matscipy = ">=0.1.0"
+jax = ">=0.5.0"
+
+[tool.pixi.target.linux-64.dependencies]
+matscipy = ">=0.1.0"
+jax = ">=0.5.0"
