@@ -91,13 +91,20 @@ class QEq:
     def _system(self, positions: Any, chi: Any, hardness: Any, cell, pbc):
         n = positions.shape[0]
         distance = self._distances(positions, cell, pbc)
-        eye = do("eye", n, n)
+        eye = do("eye", n, n, like=self.backend)
         kernel = KE / distance * (1.0 - eye)
         matrix = kernel + do("diag", hardness)
-        top = do("concatenate", [matrix, do("ones", (n, 1))], axis=1)
+        top = do(
+            "concatenate",
+            [matrix, do("ones", (n, 1), like=self.backend)],
+            axis=1,
+        )
         bottom = do(
             "concatenate",
-            [do("ones", (1, n)), do("zeros", (1, 1))],
+            [
+                do("ones", (1, n), like=self.backend),
+                do("zeros", (1, 1), like=self.backend),
+            ],
             axis=1,
         )
         augmented = do("concatenate", [top, bottom], axis=0)
@@ -124,7 +131,7 @@ class QEq:
     ) -> Any:
         n = positions.shape[0]
         distance = self._distances(positions, cell, pbc)
-        eye = do("eye", n, n)
+        eye = do("eye", n, n, like=self.backend)
         kernel = KE / distance * (1.0 - eye)
         quadratic = do("sum", (charges[:, None] * kernel) * charges[None, :])
         onsite = do("sum", hardness * charges * charges)
