@@ -28,7 +28,7 @@ from arrayff.utils.neighbors import NeighborTable
 
 __all__ = ["LennardJones"]
 
-#: Cutoff of the universal KIM model is four sigma.
+#: Compatibility alias kept for callers that build explicit cutoffs.
 KIM_CUTOFF_FACTOR = 4.0
 
 
@@ -73,9 +73,7 @@ class LennardJones(Potential):
                     "The KIM universal model fixes the cutoff at 4*sigma; "
                     "pass explicit sigma/epsilon to use a global cutoff."
                 )
-            self.cutoff = KIM_CUTOFF_FACTOR * max(
-                sigma_ for _, sigma_ in KIM_LJ_PARAMETERS.values()
-            )
+            self.cutoff = max(c for c, _, _ in KIM_LJ_PARAMETERS.values())
         else:
             if sigma is None or epsilon is None:
                 raise ValueError("Pass both sigma and epsilon, or neither.")
@@ -96,9 +94,7 @@ class LennardJones(Potential):
         if not self.kim:
             return self.cutoff
         present = np.unique(np.asarray(atoms.numbers, dtype=np.int64))
-        return KIM_CUTOFF_FACTOR * max(
-            KIM_LJ_PARAMETERS[int(z)][1] for z in present
-        )
+        return max(KIM_LJ_PARAMETERS[int(z)][0] for z in present)
 
     def _parameters(self, elements: np.ndarray) -> dict[str, Any]:
         if self.kim:
@@ -108,8 +104,9 @@ class LennardJones(Potential):
                 raise KeyError(
                     f"No KIM Lennard-Jones parameters for Z={exc.args[0]}"
                 ) from None
-            epsilon = np.array([v[0] for v in values])
-            sigma = np.array([v[1] for v in values])
+            cutoff = np.array([v[0] for v in values])
+            epsilon = np.array([v[1] for v in values])
+            sigma = np.array([v[2] for v in values])
         else:
             sigma = _per_element(self.sigma, elements)  # type: ignore[arg-type]
             epsilon = _per_element(
@@ -120,10 +117,13 @@ class LennardJones(Potential):
             raise ValueError("sigma must be positive")
         if np.any(epsilon < 0.0):
             raise ValueError("epsilon must be non-negative")
-        return {
+        params = {
             "sigma": to_backend(sigma, self.backend),
             "epsilon": to_backend(epsilon, self.backend),
         }
+        if self.kim:
+            params["cutoff"] = to_backend(cutoff, self.backend)  # type: ignore[possibly-undefined]
+        return params
 
     def energy_arrays(
         self,
@@ -139,22 +139,29 @@ class LennardJones(Potential):
 
         sigma = params["sigma"]
         epsilon = params["epsilon"]
+        cutoff = params.get("cutoff", self.cutoff)
         index = table.index
         mask = table.mask
 
         species_j = species[index]
-        sigma_ij = 0.5 * (sigma[species][:, None] + sigma[species_j])
+        sigma_i = sigma[species][:, None]
+        sigma_j = sigma[species_j]
         epsilon_ij = do("sqrt", epsilon[species][:, None] * epsilon[species_j])
+        if self.kim:
+            # Adsorption/OpenKIM convention: geometric mixing of sigma and of
+            # the per element cutoff.
+            sigma_ij = do("sqrt", sigma_i * sigma_j)
+            cutoff_ij = do("sqrt", cutoff[species][:, None] * cutoff[species_j])
+        else:
+            sigma_ij = 0.5 * (sigma_i + sigma_j)
+            cutoff_ij = self.cutoff
 
         distance = pair_distances(positions, table, cell)
         distance = do("where", mask, distance, 1.0)
 
         if self.kim:
-            # Per pair cutoff: the model is shifted at 4 * sigma_ij.
-            cutoff_ij = KIM_CUTOFF_FACTOR * sigma_ij
             inside = do("logical_and", mask, distance < cutoff_ij)
         else:
-            cutoff_ij = self.cutoff
             inside = mask
 
         sr6 = (sigma_ij / distance) ** 6
