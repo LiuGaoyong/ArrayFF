@@ -3,7 +3,7 @@ import pytest
 from ase import Atoms
 from ase.build import fcc111, molecule
 
-from arrayff.neighborlist import (
+from arrayff.neighbors._list import (
     _ase_neighbor_list_3loop,
     _ase_neighbor_list_kdtree,
     _sklearn_query_ball_point,
@@ -16,8 +16,9 @@ _LST_1 = ["pymatgen", "sklearn"]
 
 
 def test_sklearn_query_ball_point() -> None:
-    arr0 = np.random.rand(10, 3)
-    arr1 = np.random.rand(3, 3)
+    rng = np.random.default_rng(0)
+    arr0 = rng.random((10, 3))
+    arr1 = rng.random((3, 3))
     max_distance = 0.5
     i, j, _ = _sklearn_query_ball_point(arr0, arr1, max_distance)
     print("", i, j, sep="\n")
@@ -95,6 +96,7 @@ class TestNeighborList:
         cutoff: float = 3.0,
         idx: list[int] | None = None,
     ) -> None:
+        pytest.importorskip(backend)
         quantities = "ijSd"
         print()
         print("#############################################################")
@@ -193,11 +195,14 @@ class TestNeighborList:
         )
 
     def test_neighbor_list_for_atoms_general_pbc(self, backend: str) -> None:
+        rng = np.random.default_rng(0)
         self._test_neighbor_list_for_atoms(
             atoms=Atoms(
                 "H4",
-                positions=np.random.rand(4, 3),
-                cell=np.random.rand(3, 3),
+                positions=rng.random((4, 3)),
+                cell=np.array(
+                    [[3.0, 0.0, 0.0], [0.2, 3.1, 0.0], [0.1, 0.3, 3.2]]
+                ),
                 pbc=np.ones(3, dtype=bool),
             ),
             backend=str(backend).lower(),

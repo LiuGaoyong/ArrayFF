@@ -25,17 +25,18 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "ase",
-    "autoray",
     "numpy>=2,<3",
+    "ase>=3.23",
+    "autoray>=0.6",
+    "autograd>=1.6",
     "scipy>=1.10,<2",
     "scikit-learn>=1.5",
-    "array-api-compat>=1.10",
-    "array_api-extra>=0.10",
-    "types-array-api>=1.0",
-    "typing-extensions",
-    "vesin",
 ]
+
+[project.optional-dependencies]
+torch = ["torch>=2.3"]
+jax = ["jax>=0.5"]
+builders = ["vesin", "matscipy", "pymatgen"]
 
 [dependency-groups]
 dev = [
@@ -47,6 +48,7 @@ dev = [
     "jupyterlab",
     "chemiscope",
     # "playwright>=1.52", # chemiscope [headless]
+    "autograd>=1.6",
     "nglview",
     "jax>=0.5",
     "torch>=2.10",
@@ -117,6 +119,7 @@ array-api-strict = ">=2.5.0"
 autoray = ">=0.1.0"
 scikit-learn = ">=1.8.0"
 numpy = ">=2.0.0"
+autograd = ">=1.6"
 scipy = ">=1.10.2"
 jupyterlab = ">=4.5.8"
 pytest-xdist = ">=3.8.0"

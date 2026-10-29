@@ -1,0 +1,1 @@
+"""EAM potential."""
