@@ -43,7 +43,8 @@ calc = EMT(backend="jax", jit=True)
 ```
 
 `LennardJones()` without arguments uses the OpenKIM universal shifted
-parameters (118 elements, cutoff `4*sigma` per pair).
+parameters (118 elements, cutoff `4*sigma` per pair, Lorentz-Berthelot
+mixing: arithmetic `r0`/cutoff and geometric `epsilon`).
 
 Each potential exposes analytic and autodiff forces/stress:
 

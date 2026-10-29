@@ -70,10 +70,11 @@ class LennardJones(PairwisePotential):
                 )
             cutoff = max(c for c, _, _ in KIM_LJ_PARAMETERS.values())
             shift = True if shift is None else shift
+            # Lorentz-Berthelot: arithmetic r0/cutoff, geometric depth.
             mixing = {
-                "r0": "geometric",
+                "r0": "arithmetic",
                 "depth": "geometric",
-                "cutoff": "geometric",
+                "cutoff": "arithmetic",
             }
         else:
             if sigma is None or epsilon is None:

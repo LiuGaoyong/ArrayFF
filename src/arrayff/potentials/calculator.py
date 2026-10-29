@@ -12,6 +12,7 @@ import inspect
 from collections.abc import Iterable
 from typing import Any
 
+import numpy as np
 from ase.calculators.calculator import Calculator, all_changes
 from ase.stress import full_3x3_to_voigt_6_stress
 
@@ -72,6 +73,22 @@ class ArrayFFCalculator(Calculator):
         # ASE reads this attribute per instance.
         self.implemented_properties = supported
 
+    def get_stress(self, atoms: Any = None) -> Any:
+        """Return a zero Voigt stress vector for non-periodic systems.
+
+        ASE always exposes an ``Atoms.cell`` object, even for molecules.
+        Asking for stress there is not meaningful; return zeros instead of
+        raising, and do not add a ``stress`` entry to ``results``.
+        """
+        if atoms is None:
+            atoms = self.atoms
+        if atoms is None or atoms.cell.rank != 3:
+            # Non-periodic stress is undefined; return a zero Voigt vector
+            # without adding a ``stress`` entry to ``results`` (reference
+            # data stores no periodic stress for these systems).
+            return np.zeros(6)
+        return super().get_stress(atoms)
+
     def calculate(
         self,
         atoms: Any = None,
@@ -80,6 +97,13 @@ class ArrayFFCalculator(Calculator):
     ) -> None:
         super().calculate(atoms, properties, system_changes)
         requested = set(properties)
+        if (
+            "stress" in requested
+            and self.atoms is not None
+            and self.atoms.cell is not None
+            and self.atoms.cell.rank != 3
+        ):
+            requested.discard("stress")
         wanted = ["energy"]
         if "forces" in requested:
             wanted.append("forces")

@@ -309,7 +309,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/widgetsnbextension-4.0.16-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.2-pyh5ded981_0.conda
       - pypi: ./
-      - pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/eb/82/afc9eaca37498a94b2e56eb504a0e0529a0a2ced99fe483240406309e8b2/advect-0.3.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/anyio-4.15.1-pyh5ded981_1.conda
@@ -591,7 +591,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-h31dac16_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
-      - pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/cf/9e/d9c84546c9aced8ae187ef5bcc26465a3d9fca143f6be06dccbab7237186/advect-0.3.1-cp314-cp314-macosx_11_0_arm64.whl
       win-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/anyio-4.15.1-pyh5ded981_1.conda
@@ -853,7 +853,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zlib-ng-2.3.3-h0261ad2_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_7.conda
       - pypi: ./
-      - pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8e/23/0edc1c151eeb5aa419f6631037bb12e082738e1e1a4d08d58e48c1b953bd/advect-0.3.1-cp314-cp314-win_amd64.whl
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -1147,7 +1147,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/widgetsnbextension-4.0.16-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.2-pyh5ded981_0.conda
       - pypi: ./
-      - pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/eb/82/afc9eaca37498a94b2e56eb504a0e0529a0a2ced99fe483240406309e8b2/advect-0.3.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/anyio-4.15.1-pyh5ded981_1.conda
@@ -1429,7 +1429,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-h31dac16_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./
-      - pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/cf/9e/d9c84546c9aced8ae187ef5bcc26465a3d9fca143f6be06dccbab7237186/advect-0.3.1-cp314-cp314-macosx_11_0_arm64.whl
       win-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/anyio-4.15.1-pyh5ded981_1.conda
@@ -1692,7 +1692,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_7.conda
       - pypi: ./
       - pypi: https://files.pythonhosted.org/packages/1f/03/936e0d615d3ffc1606177370c333aed776a2c89a80601a2b32b777735950/matscipy-1.3.1-cp314-cp314-win_amd64.whl
-      - pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8e/23/0edc1c151eeb5aa419f6631037bb12e082738e1e1a4d08d58e48c1b953bd/advect-0.3.1-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/e5/7b/940134f193e705dea624e55f597ef475f824e4ec2da34973bf7c3794938c/jaxlib-0.12.0.1-cp314-cp314-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/f9/5d/be6a4b67161462d1a0a97c7405459c2f76a4c23c66b39ad496527f68a17d/jax-0.12.0.1-py3-none-any.whl
 packages:
@@ -10352,16 +10352,17 @@ packages:
 - pypi: ./
   name: arrayff
   requires_dist:
-  - ase
-  - autoray
   - numpy>=2,<3
+  - advect>=0.3,<0.4 ; python_full_version < '3.16'
+  - ase>=3.23
+  - autoray>=0.6
   - scipy>=1.10,<2
   - scikit-learn>=1.5
-  - array-api-compat>=1.10
-  - array-api-extra>=0.10
-  - types-array-api>=1.0
-  - typing-extensions
-  - vesin
+  - torch>=2.3 ; extra == 'torch'
+  - jax>=0.5 ; extra == 'jax'
+  - vesin ; extra == 'builders'
+  - matscipy ; extra == 'builders'
+  - pymatgen ; extra == 'builders'
   requires_python: '>=3.12'
 - pypi: https://files.pythonhosted.org/packages/1f/03/936e0d615d3ffc1606177370c333aed776a2c89a80601a2b32b777735950/matscipy-1.3.1-cp314-cp314-win_amd64.whl
   name: matscipy
@@ -10394,16 +10395,32 @@ packages:
   - argcomplete ; extra == 'cli'
   - matscipy[cli,docs,test] ; extra == 'all'
   requires_python: '>=3.10.0'
-- pypi: https://files.pythonhosted.org/packages/91/08/409256f4b35e5c06b1577270d27a31a4b0134851ca479aa9060c095e3e12/types_array_api-1.3.0-py3-none-any.whl
-  name: types-array-api
-  version: 1.3.0
-  sha256: 8cddba53e105f045f888f16c838f46df1296136423e4ae871ce9ab26bee275b1
+- pypi: https://files.pythonhosted.org/packages/8e/23/0edc1c151eeb5aa419f6631037bb12e082738e1e1a4d08d58e48c1b953bd/advect-0.3.1-cp314-cp314-win_amd64.whl
+  name: advect
+  version: 0.3.1
+  sha256: 4d1396a5749803f88b2637bec4709c062311bf142c0029892ae633ea670af212
   requires_dist:
-  - typing-extensions>=4.14
-  - attrs>=25.3 ; extra == 'cli'
-  - rich>=14 ; extra == 'cli'
-  - typer>=0.16 ; extra == 'cli'
-  requires_python: '>=3.12'
+  - array-api-compat>=1.11.2,<2
+  - numpy>=2.0,<2.6
+  - autograd>=1.9.1,<2 ; extra == 'autograd'
+  - jax>=0.4.38,<0.12 ; extra == 'jax'
+  - scipy>=1.18,<2 ; extra == 'scipy'
+  - torch>=2.3.1,<3 ; extra == 'torch'
+  - xarray>=2024.6 ; extra == 'xarray'
+  requires_python: '>=3.12,<3.16'
+- pypi: https://files.pythonhosted.org/packages/cf/9e/d9c84546c9aced8ae187ef5bcc26465a3d9fca143f6be06dccbab7237186/advect-0.3.1-cp314-cp314-macosx_11_0_arm64.whl
+  name: advect
+  version: 0.3.1
+  sha256: 5f916991a3bba75488ca4c642feb3023c2c5e9e4d871a21f18db026a2a613957
+  requires_dist:
+  - array-api-compat>=1.11.2,<2
+  - numpy>=2.0,<2.6
+  - autograd>=1.9.1,<2 ; extra == 'autograd'
+  - jax>=0.4.38,<0.12 ; extra == 'jax'
+  - scipy>=1.18,<2 ; extra == 'scipy'
+  - torch>=2.3.1,<3 ; extra == 'torch'
+  - xarray>=2024.6 ; extra == 'xarray'
+  requires_python: '>=3.12,<3.16'
 - pypi: https://files.pythonhosted.org/packages/e5/7b/940134f193e705dea624e55f597ef475f824e4ec2da34973bf7c3794938c/jaxlib-0.12.0.1-cp314-cp314-win_amd64.whl
   name: jaxlib
   version: 0.12.0.1
@@ -10413,6 +10430,19 @@ packages:
   - numpy>=2.0
   - ml-dtypes>=0.5.0
   requires_python: '>=3.12'
+- pypi: https://files.pythonhosted.org/packages/eb/82/afc9eaca37498a94b2e56eb504a0e0529a0a2ced99fe483240406309e8b2/advect-0.3.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+  name: advect
+  version: 0.3.1
+  sha256: d2ee6b0fe07444b589003338d87103ec0798304e21a229fd2e8e51331bce06e3
+  requires_dist:
+  - array-api-compat>=1.11.2,<2
+  - numpy>=2.0,<2.6
+  - autograd>=1.9.1,<2 ; extra == 'autograd'
+  - jax>=0.4.38,<0.12 ; extra == 'jax'
+  - scipy>=1.18,<2 ; extra == 'scipy'
+  - torch>=2.3.1,<3 ; extra == 'torch'
+  - xarray>=2024.6 ; extra == 'xarray'
+  requires_python: '>=3.12,<3.16'
 - pypi: https://files.pythonhosted.org/packages/f9/5d/be6a4b67161462d1a0a97c7405459c2f76a4c23c66b39ad496527f68a17d/jax-0.12.0.1-py3-none-any.whl
   name: jax
   version: 0.12.0.1

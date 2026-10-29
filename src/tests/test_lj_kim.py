@@ -78,7 +78,8 @@ class Test_LJ_KIM:
 
     @cached_property
     def results(self) -> dict[str, ArrayLike]:
-        return {k: v for k, v in np.load(self.__npz_file)}
+        data = np.load(self.__npz_file, allow_pickle=True)
+        return {key: data[key] for key in data.files}
 
     @pytest.mark.parametrize(
         "col_name, atoms_name",

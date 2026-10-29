@@ -131,6 +131,7 @@ opt_einsum = ">=0.1.0"
 ml_dtypes = ">=0.1.0"
 python-vesin = ">=0.1.0"
 pymatgen = ">=2023.6"
+advect = ">=0.3.0"
 
 [tool.pixi.target.osx-arm64.dependencies]
 matscipy = ">=0.1.0"
