@@ -26,9 +26,9 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=2,<3",
-    "advect>=0.3,<0.4; python_version < '3.16'",
     "ase>=3.23",
     "autoray>=0.6",
+    "autograd>=1.6",
     "scipy>=1.10,<2",
     "scikit-learn>=1.5",
 ]
@@ -48,6 +48,7 @@ dev = [
     "jupyterlab",
     "chemiscope",
     # "playwright>=1.52", # chemiscope [headless]
+    "autograd>=1.6",
     "nglview",
     "jax>=0.5",
     "torch>=2.10",
@@ -118,6 +119,7 @@ array-api-strict = ">=2.5.0"
 autoray = ">=0.1.0"
 scikit-learn = ">=1.8.0"
 numpy = ">=2.0.0"
+autograd = ">=1.6"
 scipy = ">=1.10.2"
 jupyterlab = ">=4.5.8"
 pytest-xdist = ">=3.8.0"
@@ -131,7 +133,6 @@ opt_einsum = ">=0.1.0"
 ml_dtypes = ">=0.1.0"
 python-vesin = ">=0.1.0"
 pymatgen = ">=2023.6"
-advect = ">=0.3.0"
 
 [tool.pixi.target.osx-arm64.dependencies]
 matscipy = ">=0.1.0"

@@ -47,7 +47,7 @@ def test_energy_and_forces_match_ase(table_file):
     np.testing.assert_allclose(forces, atoms.get_forces(), atol=1e-8)
 
 
-@pytest.mark.parametrize("backend", ["torch", "jax", "advect"])
+@pytest.mark.parametrize("backend", ["torch", "jax", "autograd"])
 def test_backends_agree(table_file, backend):
     pytest.importorskip(backend)
     if backend == "jax":

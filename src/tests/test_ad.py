@@ -19,13 +19,13 @@ from arrayff.utils.dispatch import do
 F = lambda x: do("sum", x**2)  # noqa: E731
 
 
-def test_numpy_routes_to_advect():
+def test_numpy_routes_to_autograd():
     x = np.array([1.0, 2.0, 3.0])
     np.testing.assert_allclose(grad(F)(x), 2 * x)
     value, gradient = value_and_grad(F)(x)
     assert float(value) == pytest.approx(14.0)
     np.testing.assert_allclose(gradient, 2 * x)
-    assert "advect" in registered_backends()
+    assert "autograd" in registered_backends()
 
 
 def test_numpy_jacrev():

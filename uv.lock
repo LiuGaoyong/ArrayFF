@@ -21,38 +21,6 @@ resolution-markers = [
 ]
 
 [[package]]
-name = "advect"
-version = "0.3.1"
-source = { registry = "https://mirrors.cernet.edu.cn/pypi/web/simple" }
-dependencies = [
-    { name = "array-api-compat" },
-    { name = "numpy" },
-]
-sdist = { url = "https://mirror.nju.edu.cn/pypi/web/packages/09/e4/1ae55dd1d70419c7eac377a8787c6529ae16d9feda565d6b2d57be24bfec/advect-0.3.1.tar.gz", hash = "sha256:620f47e12413a038c28dbaf6b15fcba45535e1b636b5727e6fe5517e2d3645eb" }
-wheels = [
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/80/d0/d0a563b7bc35fdb33db7a50568cc104c8faa2011318b803d03940a8b83dd/advect-0.3.1-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:7d11086fef5b52f2f98134b75cda71c65d079b237a78b701f539f94c1cf80adc" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/13/39/67ae03ccb3e8105255350c702ecf72e479ac222eca85a67212009b3892e3/advect-0.3.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:855550d417592d99feabb1683d7d4a2a4a533a4b4ff57feba2bc863a9f401789" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/28/1e/d4658a176a37f702ec5ab9bf45b79299c587fafc0492933f7dcffe8be8dc/advect-0.3.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:55cdf407a862f99f68a414be777e0eedb4a3b28d72a46f1cc9ea31ad57074e26" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/b6/ae/998daa2d62682a84ded91476e6aa1a6b3ce1819c2eef9f8fe863fab1bc5e/advect-0.3.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7720e3d149deff66cc0445417efe592ccf13b608bd45eb131e75c44fc15abde2" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/7d/e8/11e63e6570dba68d8bc1fddaa18ad3088a66261b48a54dab05f82b59fd43/advect-0.3.1-cp312-cp312-win_amd64.whl", hash = "sha256:85b6281b7233f5f3c61e25fe4288b96aa751639e08daa209d06676ee4d65e6a3" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/f3/74/551e989059a3ea91a8a6228ffe89972500ec6f0e95ecb8fa3b91071a52e7/advect-0.3.1-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:92f68645b85975782faf2b18a4104e85f714b1e3e9d944cf830e348ff7df0608" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/cb/86/cc240db8bc621b28a1325a0616bbed206b15cf315c7b75661c6f3330f714/advect-0.3.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:51fba640ae33e284eb79ef6dec060c6e8ed14d9090a527030397d26952a043ca" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/d5/4d/86b947bdeba9b4e7257a9ce7d217965cf1e68a862d925aecbb2cb4dc9695/advect-0.3.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7361fc7582b8ae48688a92a058d5e5ea43a6527a8d70359df04bd4fa65ae91b6" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/eb/82/afc9eaca37498a94b2e56eb504a0e0529a0a2ced99fe483240406309e8b2/advect-0.3.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d2ee6b0fe07444b589003338d87103ec0798304e21a229fd2e8e51331bce06e3" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/ba/5d/0d3e39d4c6e9c1a9130fc1a1b910f83ee21de0a26b2f81093a626a23b912/advect-0.3.1-cp313-cp313-win_amd64.whl", hash = "sha256:91c74567f118b5949dba4c2aa250cdd42f0912fadef22630aa809868042bf6fc" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/25/8b/7f8e55d3caa5712811f6d52f905e4ccbbfd9e653eab7bbdc66842ef13d48/advect-0.3.1-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:f207889f7a75d0a3e9670de8bd50629392e536c211500ba1c3afe1fd445704c2" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/cf/9e/d9c84546c9aced8ae187ef5bcc26465a3d9fca143f6be06dccbab7237186/advect-0.3.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:5f916991a3bba75488ca4c642feb3023c2c5e9e4d871a21f18db026a2a613957" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/07/94/95c2166a36f7c020cf8feff11731705278b8fc80192cd717b4e0098cf29b/advect-0.3.1-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7ad2c9c31c24da8f2e170880041cc4572040bbf31f08bce424852b18a538f553" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/82/1d/d0fb47f7da69c977c08e1275264909e086060ca407355e1bb9d7c59eff4d/advect-0.3.1-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9ce3f2b55b31e10cef180ef94f3e17999d3f36d83a8fa48071a1a2bcb7a63cb4" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/8e/23/0edc1c151eeb5aa419f6631037bb12e082738e1e1a4d08d58e48c1b953bd/advect-0.3.1-cp314-cp314-win_amd64.whl", hash = "sha256:4d1396a5749803f88b2637bec4709c062311bf142c0029892ae633ea670af212" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/fa/3e/aaef6b9ec186ac63d691296ba8020e709dd67800664e4b980c4dc71dacd8/advect-0.3.1-cp315-cp315-macosx_10_12_x86_64.whl", hash = "sha256:55d0c91e3d46f3d1920c01e0b84fd8c068b9aaae2028a3ec2f603ea74cffc358" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/f2/4c/58581adbc51143b9bd2a5327770fe29fbb17928a6c41002b857ac4e5125f/advect-0.3.1-cp315-cp315-macosx_11_0_arm64.whl", hash = "sha256:50a00ef6dca0bee5ca2aa8af9cca6711ced74bc020c790d7c14fd63859cc4a29" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/bf/94/3864b72bf3d516ab8f3b7188eeadd4a0d4205b2d180fba7866001c731423/advect-0.3.1-cp315-cp315-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2dbe70e2d606e68f3429c7f4eaedb1bc4e8c06946706f49b8cf0010b6577394c" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/e8/f2/566a1561920da9736d28174f289a4c4affe8cb9c5543d3e9014dc1a6395b/advect-0.3.1-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:10ef2a932b8fa1d1ffc75b5b05deb64ebe89824d4e772a0abf8f321a71bb3647" },
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/19/f6/c8a9a3c177db56f022bb47042b0812f37a45fb758c8491389f8d24cb705a/advect-0.3.1-cp315-cp315-win_amd64.whl", hash = "sha256:d45772c4bdc619bbfa630b79a2fd47defec5eae337f916d18f6d7c9f4c292531" },
-]
-
-[[package]]
 name = "anyio"
 version = "4.14.2"
 source = { registry = "https://mirrors.cernet.edu.cn/pypi/web/simple" }
@@ -144,15 +112,6 @@ wheels = [
 ]
 
 [[package]]
-name = "array-api-compat"
-version = "1.16.0"
-source = { registry = "https://mirrors.cernet.edu.cn/pypi/web/simple" }
-sdist = { url = "https://mirror.nju.edu.cn/pypi/web/packages/da/88/d7b0f89b1ad0f42ef94b8440fff87b7c0b69701b3c30a5b160fdbc850f25/array_api_compat-1.16.0.tar.gz", hash = "sha256:c8117cb4d6c7aacaec38c2705f72509e342c20b1a716a04cb5397a611f122d51" }
-wheels = [
-    { url = "https://mirror.nju.edu.cn/pypi/web/packages/d0/09/cab56a48b7e83609831c96f36658f9e30421877875071f2413eb591cf756/array_api_compat-1.16.0-py3-none-any.whl", hash = "sha256:0464934d7d5f1e9b728b2e248da52400630b1fcb46b70073eab3c7ae084290aa" },
-]
-
-[[package]]
 name = "array-api-strict"
 version = "2.6.1"
 source = { registry = "https://mirrors.cernet.edu.cn/pypi/web/simple" }
@@ -169,8 +128,8 @@ name = "arrayff"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [
-    { name = "advect", marker = "python_full_version < '3.16'" },
     { name = "ase" },
+    { name = "autograd" },
     { name = "autoray" },
     { name = "numpy" },
     { name = "scikit-learn" },
@@ -194,6 +153,7 @@ torch = [
 [package.dev-dependencies]
 dev = [
     { name = "array-api-strict" },
+    { name = "autograd" },
     { name = "chemiscope" },
     { name = "jax" },
     { name = "jupyterlab" },
@@ -209,8 +169,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "advect", marker = "python_full_version < '3.16'", specifier = ">=0.3,<0.4" },
     { name = "ase", specifier = ">=3.23" },
+    { name = "autograd", specifier = ">=1.6" },
     { name = "autoray", specifier = ">=0.6" },
     { name = "jax", marker = "extra == 'jax'", specifier = ">=0.5" },
     { name = "matscipy", marker = "extra == 'builders'" },
@@ -226,6 +186,7 @@ provides-extras = ["torch", "jax", "builders"]
 [package.metadata.requires-dev]
 dev = [
     { name = "array-api-strict", specifier = ">=2.5" },
+    { name = "autograd", specifier = ">=1.6" },
     { name = "chemiscope" },
     { name = "jax", specifier = ">=0.5" },
     { name = "jupyterlab" },
@@ -291,6 +252,18 @@ source = { registry = "https://mirrors.cernet.edu.cn/pypi/web/simple" }
 sdist = { url = "https://mirror.nju.edu.cn/pypi/web/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz", hash = "sha256:d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32" }
 wheels = [
     { url = "https://mirror.nju.edu.cn/pypi/web/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl", hash = "sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309" },
+]
+
+[[package]]
+name = "autograd"
+version = "1.9.1"
+source = { registry = "https://mirrors.cernet.edu.cn/pypi/web/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://mirror.nju.edu.cn/pypi/web/packages/9d/ac/4a8b58364ba865ab545251edbe475e5a35326814a5d274a2211d33ed8a5d/autograd-1.9.1.tar.gz", hash = "sha256:7818c5c69ddf9efb7da74097bd741a4c7920133f41966f68537223a15ef798bc" }
+wheels = [
+    { url = "https://mirror.nju.edu.cn/pypi/web/packages/6e/ce/8c98e6604bb1ec9d03c8493c328185b69bb7533fe08f3640f0f3641bd9d1/autograd-1.9.1-py3-none-any.whl", hash = "sha256:b788bae3fa010cbffb4cfb7b8ba2a3f0daa6072a8506da6164c779fe9cf3e05a" },
 ]
 
 [[package]]

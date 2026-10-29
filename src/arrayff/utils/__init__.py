@@ -12,7 +12,7 @@ from arrayff.utils.backend import (
 from arrayff.utils.dispatch import (
     do,
     dtype_of,
-    register_advect_alias,
+    register_autograd_alias,
     require_same_backend,
     to_backend,
     to_numpy,
@@ -41,7 +41,7 @@ __all__ = [
     "is_available",
     "jit",
     "require",
-    "register_advect_alias",
+    "register_autograd_alias",
     "require_same_backend",
     "resolve_ad_backend",
     "to_backend",

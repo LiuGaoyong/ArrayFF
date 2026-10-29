@@ -14,13 +14,13 @@ from typing import Any
 import autoray as ar
 
 #: Backends whose arrays can flow through the kernels.
-ARRAY_BACKENDS = ("numpy", "torch", "jax", "advect")
+ARRAY_BACKENDS = ("numpy", "torch", "jax", "autograd")
 
 #: Backends that provide native automatic differentiation.
-AD_BACKENDS = ("torch", "jax", "advect")
+AD_BACKENDS = ("torch", "jax", "autograd")
 
 #: Backend used to differentiate plain ``numpy`` inputs.
-NUMPY_AD_BACKEND = "advect"
+NUMPY_AD_BACKEND = "autograd"
 
 
 def infer_backend(*arrays: Any) -> str:
@@ -54,7 +54,7 @@ def infer_backend(*arrays: Any) -> str:
 def resolve_ad_backend(*primals: Any) -> str:
     """Return the backend used to differentiate the given primals.
 
-    Plain ``numpy`` arrays are differentiated with :mod:`advect`, which is
+    Plain ``numpy`` arrays are differentiated with :mod:`autograd`, which is
     the designated NumPy automatic differentiation engine.
     """
     backend = infer_backend(*primals)
@@ -77,7 +77,7 @@ def default_dtype(backend: str) -> Any:
         import jax.numpy as jnp
 
         return jnp.float64
-    if backend == "advect":
+    if backend == "autograd":
         import numpy as np
 
         return np.dtype("float64")
@@ -96,6 +96,6 @@ def available_backends() -> tuple[str, ...]:
         names.append("torch")
     if is_available("jax"):
         names.append("jax")
-    if is_available("advect"):
-        names.append("advect")
+    if is_available("autograd"):
+        names.append("autograd")
     return tuple(names)

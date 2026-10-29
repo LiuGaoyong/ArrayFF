@@ -96,6 +96,7 @@ class TestNeighborList:
         cutoff: float = 3.0,
         idx: list[int] | None = None,
     ) -> None:
+        pytest.importorskip(backend)
         quantities = "ijSd"
         print()
         print("#############################################################")

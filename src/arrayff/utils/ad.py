@@ -2,7 +2,7 @@
 
 This module merges the former ``arrayff.ad`` package into a single file:
 detach helpers, the autoray transform registry and the public transforms.
-Importing it never imports torch/jax/advect; registration happens when a
+Importing it never imports torch/jax/autograd; registration happens when a
 transform is first requested for a backend.
 """
 
@@ -35,7 +35,7 @@ def stop_gradient(x: Any) -> Any:
     """Return ``x`` with its gradient contribution removed.
 
     Dispatches through autoray, so the same call works for numpy (identity),
-    torch (``.detach()``), JAX (``lax.stop_gradient``) and advect.
+    torch (``.detach()``), JAX (``lax.stop_gradient``) and autograd.
     """
     return do("stop_gradient", x)
 
@@ -101,31 +101,45 @@ def _register_torch() -> None:
     ar.register_function("torch", "vjp", _vjp_from_immediate(tf))
 
 
-def _register_advect() -> None:
-    import advect
+def _register_autograd() -> None:
+    import autograd
+    import autograd.numpy as anp
+    from autograd.extend import defvjp, primitive
+
+    @primitive
+    def _stop_gradient(x):
+        return anp.asarray(x)
+
+    defvjp(
+        _stop_gradient,
+        lambda ans, x: lambda g: anp.zeros_like(x),
+    )
 
     def jvp(fn: Callable) -> Callable:
-        transformed = advect.jvp(fn)
+        transformed = autograd.make_jvp(fn)
 
         def apply(primals: tuple, tangents: tuple) -> tuple:
-            return transformed(*primals, tangents=tangents[0])
+            return transformed(primals[0])(tangents[0])
 
         return apply
 
     def vjp(fn: Callable) -> Callable:
-        transformed = advect.vjp(fn)
+        transformed = autograd.make_vjp(fn)
 
         def apply(primals: tuple) -> tuple:
-            return transformed(*primals)
+            pullback, value = transformed(primals[0])
+            return value, pullback
 
         return apply
 
-    ar.register_function("advect", "grad", advect.grad)
-    ar.register_function("advect", "value_and_grad", advect.value_and_grad)
-    ar.register_function("advect", "jacrev", advect.jacobian)
-    ar.register_function("advect", "jvp", jvp)
-    ar.register_function("advect", "vjp", vjp)
-    ar.register_function("advect", "stop_gradient", advect.stop_gradient)
+    ar.register_function("autograd", "grad", autograd.grad)
+    ar.register_function(
+        "autograd", "value_and_grad", autograd.value_and_grad
+    )
+    ar.register_function("autograd", "jacrev", autograd.jacobian)
+    ar.register_function("autograd", "jvp", jvp)
+    ar.register_function("autograd", "vjp", vjp)
+    ar.register_function("autograd", "stop_gradient", _stop_gradient)
 
 
 def _register_numpy() -> None:
@@ -139,7 +153,7 @@ def _REGISTRARS() -> dict[str, Callable[[], None]]:
     return {
         "jax": _register_jax,
         "torch": _register_torch,
-        "advect": _register_advect,
+        "autograd": _register_autograd,
         "numpy": _register_numpy,
     }
 

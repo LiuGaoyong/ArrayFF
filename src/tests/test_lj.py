@@ -73,7 +73,7 @@ def test_forces_match_finite_differences():
     np.testing.assert_allclose(forces, numeric, atol=1e-6)
 
 
-@pytest.mark.parametrize("backend", ["numpy", "torch", "jax", "advect"])
+@pytest.mark.parametrize("backend", ["numpy", "torch", "jax", "autograd"])
 def test_backends_agree(backend):
     pytest.importorskip(backend)
     if backend == "jax":

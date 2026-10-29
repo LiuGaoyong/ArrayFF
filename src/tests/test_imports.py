@@ -13,7 +13,7 @@ from arrayff.utils.optional import is_available
 def test_core_import_does_not_load_optional_backends():
     code = (
         "import sys, arrayff, arrayff.potentials, arrayff.neighbors; "
-        "bad = [m for m in ('torch', 'jax') if m in sys.modules]; "
+        "bad = [m for m in ('torch', 'jax', 'advect') if m in sys.modules]; "
         "assert not bad, bad"
     )
     subprocess.run([sys.executable, "-c", code], check=True)

@@ -8,7 +8,7 @@ so the backend is chosen by the arrays you pass in. Structural I/O uses
 `ase.Atoms` throughout.
 
 The only required array backends are NumPy and
-[`advect`](https://github.com/jcmgray/advect) (for NumPy autodiff); PyTorch and
+[`autograd`](https://github.com/HIPS/autograd) (for NumPy autodiff); PyTorch and
 JAX are optional extras.
 
 ## Install
@@ -28,7 +28,7 @@ from arrayff.potentials import EMT, EMTCalculator
 
 atoms = bulk("Cu", "fcc", a=3.6, cubic=True).repeat((2, 2, 2))
 
-calc = EMT()                       # numpy backend + advect for forces
+calc = EMT()                       # numpy backend + autograd for forces
 energy, forces = calc.energy_and_forces(atoms, method="analytic")
 
 atoms.calc = EMTCalculator()       # ASE calculator interface

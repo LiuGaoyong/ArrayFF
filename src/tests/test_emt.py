@@ -47,7 +47,7 @@ def test_surface_relaxation_force_is_nonzero():
     assert np.abs(forces[0]).max() > 1e-3
 
 
-@pytest.mark.parametrize("backend", ["torch", "jax", "advect"])
+@pytest.mark.parametrize("backend", ["torch", "jax", "autograd"])
 def test_backends_agree(backend):
     pytest.importorskip(backend)
     if backend == "jax":
