@@ -16,7 +16,7 @@ class LJCalculator(ArrayFFCalculator):
     """Lennard-Jones calculator (OpenKIM universal parameters by default)."""
 
     def __init__(self, **kwargs: Any) -> None:
-        potential_kwargs, calculator_kwargs = split_kwargs(kwargs, LennardJones)
+        potential_kwargs, calculator_kwargs = split_kwargs(kwargs, LennardJones)  # type: ignore
         super().__init__(LennardJones(**potential_kwargs), **calculator_kwargs)
         self.parameters = potential_kwargs
 
@@ -25,7 +25,7 @@ class MorseCalculator(ArrayFFCalculator):
     """Morse calculator."""
 
     def __init__(self, **kwargs: Any) -> None:
-        potential_kwargs, calculator_kwargs = split_kwargs(kwargs, Morse)
+        potential_kwargs, calculator_kwargs = split_kwargs(kwargs, Morse)  # type: ignore
         super().__init__(Morse(**potential_kwargs), **calculator_kwargs)
 
 
@@ -34,8 +34,10 @@ class LJ93Calculator(ArrayFFCalculator):
 
     def __init__(self, **kwargs: Any) -> None:
         potential_kwargs, calculator_kwargs = split_kwargs(
-            kwargs, LennardJones93
+            kwargs,
+            LennardJones93,  # type: ignore
         )
         super().__init__(
-            LennardJones93(**potential_kwargs), **calculator_kwargs
+            LennardJones93(**potential_kwargs),
+            **calculator_kwargs,
         )

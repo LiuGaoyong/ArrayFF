@@ -2,14 +2,27 @@
 
 from __future__ import annotations
 
+from functools import cached_property
+from pathlib import Path
+
 import numpy as np
 import pytest
 from ase import Atoms
 from ase.build import bulk
 from ase.calculators.lj import LennardJones as AseLennardJones
+from ase.collections import dcdft, g2, s22
+from ase.collections.collection import Collection
+from numpy.typing import ArrayLike
 
 from arrayff.potentials import LennardJones
+from arrayff.potentials.pairwise.calculator import LJCalculator
 from arrayff.potentials.pairwise.lj_kim import KIM_LJ_PARAMETERS
+
+dct_collection: dict[str, Collection] = {
+    "g2": g2,
+    "s22": s22,
+    "dcdft": dcdft,
+}
 
 
 def _atoms(symbol="Ar", a=5.26) -> Atoms:
@@ -58,3 +71,26 @@ def test_mixed_species_uses_lorentz_berthelot() -> None:
         shift=True,
     )
     assert energy == pytest.approx(explicit.energy(atoms), rel=1e-12)
+
+
+class Test_LJ_KIM:
+    __npz_file = Path(__file__).with_suffix(".npz")
+
+    @cached_property
+    def results(self) -> dict[str, ArrayLike]:
+        return {k: v for k, v in np.load(self.__npz_file)}
+
+    @pytest.mark.parametrize(
+        "col_name, atoms_name",
+        [(k, i) for k, col in dct_collection.items() for i in col.names],
+    )
+    def test_spe(self, col_name: str, atoms_name: str) -> None:
+        atoms: Atoms = dct_collection[col_name][atoms_name]
+        atoms.calc = LJCalculator()
+        atoms.get_potential_energy()
+        atoms.get_forces()
+        if atoms.cell is not None:
+            atoms.get_stress()
+        for k, v in atoms.calc.results.items():
+            v0 = self.results[f"{col_name}#{atoms_name}#{k}"]
+            np.testing.assert_array_almost_equal(v, v0)  # type: ignore

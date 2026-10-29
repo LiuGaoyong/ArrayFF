@@ -6,6 +6,10 @@ https://openkim.org (LGPL-2.1-or-later).
 sigma from covalent radii, epsilon from bond dissociation energies and
 cutoff = 4 * sigma; each pair is shifted to zero at its cutoff.
 Values are (cutoff [Angstrom], epsilon [eV], sigma [Angstrom]).
+
+https://github.com/openkim/kim-api/blob/master/examples/portable-models/LennardJones612_UniversalShifted__MO_959249795837_003/LennardJones612_UniversalShifted.params
+KIM-KEY: LennardJones612_UniversalShifted__MO_959249795837_003
+         LJ_ElliottAkerson_2015_Universal__MO_959249795837_003
 """
 
 from __future__ import annotations
