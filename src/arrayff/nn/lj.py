@@ -9,7 +9,7 @@ import torch
 from torch import nn
 
 from arrayff.nn.base import TorchPotential
-from arrayff.potentials.lj import KIM_LJ_PARAMETERS, LennardJones
+from arrayff.potentials.pairwise.lj import KIM_LJ_PARAMETERS, LennardJones
 
 __all__ = ["LJTorch"]
 

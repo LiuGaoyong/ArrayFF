@@ -7,7 +7,7 @@ import pytest
 from ase.build import bulk
 
 from arrayff.potentials import EMT
-from arrayff.utils.neighbors import neighbor_table
+from arrayff.neighbors._table import neighbor_table
 
 
 def _atoms():

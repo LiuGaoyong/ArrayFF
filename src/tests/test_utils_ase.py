@@ -8,7 +8,7 @@ from ase.build import bulk
 from ase.neighborlist import neighbor_list as ase_neighbor_list
 
 from arrayff.utils.ase import atoms_to_arrays, species_of
-from arrayff.utils.neighbors import neighbor_table
+from arrayff.neighbors._table import neighbor_table
 
 
 def _atoms():

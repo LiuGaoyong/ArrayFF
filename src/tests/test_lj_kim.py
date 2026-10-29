@@ -8,7 +8,7 @@ from ase.build import bulk
 from ase.calculators.lj import LennardJones as AseLennardJones
 
 from arrayff.potentials import LennardJones
-from arrayff.potentials.lj_kim import KIM_LJ_PARAMETERS
+from arrayff.potentials.pairwise.lj_kim import KIM_LJ_PARAMETERS
 
 
 def _atoms(symbol="Ar", a=5.26):

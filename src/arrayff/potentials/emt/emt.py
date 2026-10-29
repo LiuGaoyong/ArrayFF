@@ -15,11 +15,11 @@ import numpy as np
 from ase.data import chemical_symbols
 from ase.units import Bohr
 
-from arrayff.potentials._pairs import pair_distances
+from arrayff.potentials.pairwise._pairs import pair_distances
 from arrayff.potentials.base import Potential
 from arrayff.potentials.registry import register_potential
 from arrayff.utils.dispatch import do, to_backend
-from arrayff.utils.neighbors import NeighborTable
+from arrayff.neighbors._table import NeighborTable
 
 __all__ = ["EMT", "EMT_PARAMETERS", "beta"]
 

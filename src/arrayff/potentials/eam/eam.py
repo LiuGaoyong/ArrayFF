@@ -16,13 +16,13 @@ from typing import Any
 
 import numpy as np
 
-from arrayff.io.eam import EAMTable, read_setfl
+from arrayff.potentials.eam.io.eam import EAMTable, read_setfl
 from arrayff.ops.interp import interp_rows
-from arrayff.potentials._pairs import pair_distances
+from arrayff.potentials.pairwise._pairs import pair_distances
 from arrayff.potentials.base import Potential
 from arrayff.potentials.registry import register_potential
 from arrayff.utils.dispatch import do, to_backend
-from arrayff.utils.neighbors import NeighborTable
+from arrayff.neighbors._table import NeighborTable
 
 __all__ = ["EAM"]
 

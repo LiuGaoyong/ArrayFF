@@ -7,7 +7,7 @@ import torch
 from torch import nn
 
 from arrayff.nn.base import TorchPotential
-from arrayff.potentials.eam import EAM
+from arrayff.potentials.eam.eam import EAM
 
 __all__ = ["EAMTorch"]
 

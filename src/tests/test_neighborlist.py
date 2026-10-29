@@ -3,7 +3,7 @@ import pytest
 from ase import Atoms
 from ase.build import fcc111, molecule
 
-from arrayff.neighborlist import (
+from arrayff.neighbors._list import (
     _ase_neighbor_list_3loop,
     _ase_neighbor_list_kdtree,
     _sklearn_query_ball_point,

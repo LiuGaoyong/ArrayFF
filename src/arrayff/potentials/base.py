@@ -19,7 +19,7 @@ from ase import Atoms
 from arrayff import ad
 from arrayff.utils.ase import atoms_to_arrays, species_of
 from arrayff.utils.dispatch import to_backend, to_numpy
-from arrayff.utils.neighbors import NeighborTable, neighbor_table
+from arrayff.neighbors._table import NeighborTable, neighbor_table
 
 __all__ = ["Potential"]
 

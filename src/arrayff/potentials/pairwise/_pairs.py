@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from arrayff.utils.dispatch import do, dtype_of
-from arrayff.utils.neighbors import NeighborTable
+from arrayff.neighbors._table import NeighborTable
 
 __all__ = ["pair_distances", "pair_vectors"]
 

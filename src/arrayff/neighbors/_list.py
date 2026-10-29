@@ -404,16 +404,8 @@ def _vesin_neighbor_list(
 
 #############################################################
 # interface for `neighbor_list`
-def neighbor_list(
-    quantities: str,
-    a: Atoms,
-    cutoff: float,
-    self_interaction: bool = False,
-    max_nbins: int = int(1e6),
-    bothways: bool = True,
-    sorted: bool = True,
-    indices: ArrayLike | None = None,
-    backend: str
+type NeighborListBackendType = (
+    str
     | Literal[
         "vesin",
         "matscipy",
@@ -421,7 +413,22 @@ def neighbor_list(
         "ase_kdtree",
         "pymatgen",
         "sklearn",
-    ] = "sklearn",
+    ]
+)
+
+
+def neighbor_list(
+    quantities: str,
+    a: Atoms,
+    cutoff: float,
+    backend: NeighborListBackendType = "sklearn",
+    self_interaction: bool = False,
+    bothways: bool = True,
+    sorted: bool = True,
+    *args,
+    max_nbins: int = int(1e6),
+    indices: ArrayLike | None = None,
+    **kwargs,
 ) -> tuple[np.ndarray, ...]:
     """Compute a neighbor list for an atomic configuration.
 

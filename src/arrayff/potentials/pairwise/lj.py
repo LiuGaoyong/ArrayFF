@@ -19,12 +19,12 @@ from typing import Any
 
 import numpy as np
 
-from arrayff.potentials._pairs import pair_distances
 from arrayff.potentials.base import Potential
-from arrayff.potentials.lj_kim import KIM_LJ_PARAMETERS
+from arrayff.potentials.pairwise._pairs import pair_distances
+from arrayff.potentials.pairwise.lj_kim import KIM_LJ_PARAMETERS
 from arrayff.potentials.registry import register_potential
 from arrayff.utils.dispatch import do, to_backend
-from arrayff.utils.neighbors import NeighborTable
+from arrayff.neighbors._table import NeighborTable
 
 __all__ = ["LennardJones"]
 

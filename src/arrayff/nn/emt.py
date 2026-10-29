@@ -8,7 +8,7 @@ import torch
 from torch import nn
 
 from arrayff.nn.base import TorchPotential
-from arrayff.potentials.emt import EMT
+from arrayff.potentials.emt.emt import EMT
 
 __all__ = ["EMTTorch"]
 
