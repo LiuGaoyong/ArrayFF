@@ -1,17 +1,4 @@
-"""Lennard-Jones potential.
-
-Two parameter modes are supported:
-
-``kim`` (default)
-    The universal 6-12 parameters of the OpenKIM model
-    ``LennardJones612_UniversalShifted__MO_959249795837_003``: sigma from
-    covalent radii, epsilon from bond dissociation energies, Lorentz-Berthelot
-    mixing and each pair interaction shifted to zero at ``4 * sigma_ij``.
-
-``explicit``
-    User supplied ``sigma``/``epsilon`` with a global ``cutoff`` (optionally
-    energy shifted at that cutoff).
-"""
+"""Lennard-Jones potential, expressed through the generic pairwise layer."""
 
 from __future__ import annotations
 
@@ -19,23 +6,23 @@ from typing import Any
 
 import numpy as np
 
-from arrayff.potentials.base import Potential
-from arrayff.potentials.pairwise._pairs import pair_distances
+from arrayff.potentials.pairwise.base import PairwisePotential
+from arrayff.potentials.pairwise.forms import GeneralizedLJ
 from arrayff.potentials.pairwise.lj_kim import KIM_LJ_PARAMETERS
+from arrayff.potentials.pairwise.params import PairParameters
 from arrayff.potentials.registry import register_potential
-from arrayff.utils.dispatch import do, to_backend
-from arrayff.neighbors._table import NeighborTable
+from arrayff.utils.dispatch import to_backend
 
-__all__ = ["LennardJones"]
+__all__ = ["KIM_LJ_PARAMETERS", "LennardJones"]
 
-#: Compatibility alias kept for callers that build explicit cutoffs.
-KIM_CUTOFF_FACTOR = 4.0
+#: ``r0 = 2**(1/6) * sigma`` converts the usual ``(sigma, epsilon)``
+#: parameterisation into the ``(r0, depth)`` one used by GeneralizedLJ.
+SIGMA_TO_R0 = 2.0 ** (1.0 / 6.0)
 
 
 def _per_element(
     value: float | dict[int, float], elements: np.ndarray
 ) -> np.ndarray:
-    """Expand a scalar or ``{Z: value}`` map into an element array."""
     if isinstance(value, dict):
         missing = [int(z) for z in elements if int(z) not in value]
         if missing:
@@ -45,15 +32,17 @@ def _per_element(
 
 
 @register_potential("lj")
-class LennardJones(Potential):
-    """Lennard-Jones 6-12 potential with Lorentz-Berthelot mixing.
+class LennardJones(PairwisePotential):
+    """Lennard-Jones 6-12 potential.
 
-    With no ``sigma``/``epsilon`` given, the OpenKIM universal shifted
-    parameters are used. Passing explicit values switches to a global cutoff
-    model, matching e.g. ``ase.calculators.lj``.
+    With no ``sigma``/``epsilon`` the OpenKIM universal shifted parameters are
+    used (per element cutoff, geometric mixing). Passing explicit ``sigma`` /
+    ``epsilon`` switches to the ASE convention: global cutoff, arithmetic
+    sigma mixing, geometric epsilon mixing.
     """
 
     name = "lj"
+    form = GeneralizedLJ(12, 6)
 
     def __init__(
         self,
@@ -62,6 +51,8 @@ class LennardJones(Potential):
         cutoff: float | None = None,
         *,
         shift: bool | None = None,
+        smooth: bool = False,
+        layout: str = "edges",
         backend: str = "numpy",
         dtype: Any = None,
         max_neighbors: int | None = None,
@@ -75,16 +66,26 @@ class LennardJones(Potential):
                     "The KIM universal model fixes the cutoff at 4*sigma; "
                     "pass explicit sigma/epsilon to use a global cutoff."
                 )
-            self.cutoff = max(c for c, _, _ in KIM_LJ_PARAMETERS.values())
+            cutoff = max(c for c, _, _ in KIM_LJ_PARAMETERS.values())
+            shift = True if shift is None else shift
+            mixing = {
+                "r0": "geometric",
+                "depth": "geometric",
+                "cutoff": "geometric",
+            }
         else:
             if sigma is None or epsilon is None:
                 raise ValueError("Pass both sigma and epsilon, or neither.")
             if cutoff is None:
                 raise ValueError("An explicit cutoff is required.")
-            self.cutoff = float(cutoff)
-        self.shift = self.kim if shift is None else bool(shift)
+            shift = False if shift is None else shift
+            mixing = {"r0": "arithmetic", "depth": "geometric"}
+
         super().__init__(
-            self.cutoff,
+            cutoff,
+            shift=shift,
+            smooth=smooth,
+            layout=layout,
             backend=backend,
             dtype=dtype,
             max_neighbors=max_neighbors,
@@ -93,86 +94,36 @@ class LennardJones(Potential):
         )
         self.sigma = sigma
         self.epsilon = epsilon
+        self.mixing = mixing
 
-    def _cutoff_for(self, atoms) -> float:
-        if not self.kim:
-            return self.cutoff
-        present = np.unique(np.asarray(atoms.numbers, dtype=np.int64))
-        return max(KIM_LJ_PARAMETERS[int(z)][0] for z in present)
-
-    def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
+    def element_parameters(self, elements: np.ndarray) -> PairParameters:
         if self.kim:
             try:
-                values = [KIM_LJ_PARAMETERS[int(z)] for z in elements]
+                rows = [KIM_LJ_PARAMETERS[int(z)] for z in elements]
             except KeyError as exc:
                 raise KeyError(
                     f"No KIM Lennard-Jones parameters for Z={exc.args[0]}"
                 ) from None
-            cutoff = np.array([v[0] for v in values])
-            epsilon = np.array([v[1] for v in values])
-            sigma = np.array([v[2] for v in values])
+            cutoff = np.array([row[0] for row in rows])
+            epsilon = np.array([row[1] for row in rows])
+            sigma = np.array([row[2] for row in rows])
         else:
             sigma = _per_element(self.sigma, elements)  # type: ignore[arg-type]
-            epsilon = _per_element(
-                self.epsilon,
-                elements,  # type: ignore[arg-type]
-            )
+            epsilon = _per_element(self.epsilon, elements)  # type: ignore[arg-type]
+            cutoff = None
+
         if np.any(sigma <= 0.0):
             raise ValueError("sigma must be positive")
         if np.any(epsilon < 0.0):
             raise ValueError("epsilon must be non-negative")
-        params = {
-            "sigma": to_backend(sigma, self.backend),
-            "epsilon": to_backend(epsilon, self.backend),
-        }
-        if self.kim:
-            params["cutoff"] = to_backend(cutoff, self.backend)  # type: ignore[possibly-undefined]
-        return params
 
-    def energy_arrays(
-        self,
-        positions: Any,
-        species: Any,
-        table: NeighborTable,
-        cell: Any,
-        pbc: Any,
-        params: dict[str, Any],
-    ) -> Any:
-        if table.index.shape[1] == 0:
-            return do("sum", positions * 0.0)
-
-        sigma = params["sigma"]
-        epsilon = params["epsilon"]
-        cutoff = params.get("cutoff", self.cutoff)
-        index = table.index
-        mask = table.mask
-
-        species_j = species[index]
-        sigma_i = sigma[species][:, None]
-        sigma_j = sigma[species_j]
-        epsilon_ij = do("sqrt", epsilon[species][:, None] * epsilon[species_j])
-        if self.kim:
-            # Adsorption/OpenKIM convention: geometric mixing of sigma and of
-            # the per element cutoff.
-            sigma_ij = do("sqrt", sigma_i * sigma_j)
-            cutoff_ij = do("sqrt", cutoff[species][:, None] * cutoff[species_j])
-        else:
-            sigma_ij = 0.5 * (sigma_i + sigma_j)
-            cutoff_ij = self.cutoff
-
-        distance = pair_distances(positions, table, cell)
-        distance = do("where", mask, distance, 1.0)
-
-        if self.kim:
-            inside = do("logical_and", mask, distance < cutoff_ij)
-        else:
-            inside = do("logical_and", mask, distance < self.cutoff)
-
-        sr6 = (sigma_ij / distance) ** 6
-        energy = 4.0 * epsilon_ij * (sr6 * sr6 - sr6)
-        if self.shift:
-            src6 = (sigma_ij / cutoff_ij) ** 6
-            energy = energy - 4.0 * epsilon_ij * (src6 * src6 - src6)
-
-        energy = do("where", inside, energy, 0.0)
-        return 0.5 * do("sum", energy)
+        values = {"r0": SIGMA_TO_R0 * sigma, "depth": epsilon}
+        return PairParameters(
+            elements=np.asarray(elements, dtype=np.int64),
+            values={
+                name: to_backend(value, self.backend)
+                for name, value in values.items()
+            },
+            mixing=self.mixing,
+            cutoff=None if cutoff is None else to_backend(cutoff, self.backend),
+        )

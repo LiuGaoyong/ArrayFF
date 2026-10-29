@@ -9,7 +9,12 @@ import torch
 from torch import nn
 
 from arrayff.nn.base import TorchPotential
-from arrayff.potentials.pairwise.lj import KIM_LJ_PARAMETERS, LennardJones
+from arrayff.potentials.pairwise.lj import (
+    KIM_LJ_PARAMETERS,
+    SIGMA_TO_R0,
+    LennardJones,
+)
+from arrayff.potentials.pairwise.params import PairParameters
 
 __all__ = ["LJTorch"]
 
@@ -49,17 +54,21 @@ class LJTorch(LennardJones, TorchPotential):
             "cutoff_table", torch.as_tensor(cutoff, dtype=dtype)
         )
 
-    def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
+    def element_parameters(self, elements: np.ndarray) -> PairParameters:
         found = [int(z) for z in elements]
         if found != self.elements:
             raise ValueError(
                 f"LJTorch was built for elements {self.elements}, got {found}"
             )
-        return {
-            "epsilon": torch.exp(self.raw_epsilon),
-            "sigma": torch.exp(self.raw_sigma),
-            "cutoff": self.cutoff_table,
-        }
+        return PairParameters(
+            elements=np.asarray(elements, dtype=np.int64),
+            values={
+                "r0": SIGMA_TO_R0 * torch.exp(self.raw_sigma),
+                "depth": torch.exp(self.raw_epsilon),
+            },
+            mixing=self.mixing,
+            cutoff=self.cutoff_table,
+        )
 
     def forward(self, atoms: Any) -> torch.Tensor:
         return self.energy_tensor(atoms)

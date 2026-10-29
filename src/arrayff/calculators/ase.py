@@ -16,7 +16,9 @@ __all__ = [
     "ArrayFFCalculator",
     "EAMCalculator",
     "EMTCalculator",
+    "LJ93Calculator",
     "LJCalculator",
+    "MorseCalculator",
     "QEqCalculator",
 ]
 
@@ -62,6 +64,8 @@ class LJCalculator(ArrayFFCalculator):
             "epsilon",
             "cutoff",
             "shift",
+            "smooth",
+            "layout",
             "backend",
             "dtype",
             "max_neighbors",
@@ -71,6 +75,24 @@ class LJCalculator(ArrayFFCalculator):
         }
         super().__init__(LennardJones(**potential_args))
         self.parameters = potential_args
+
+
+class MorseCalculator(ArrayFFCalculator):
+    """Morse calculator."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        from arrayff.potentials import Morse
+
+        super().__init__(Morse(**kwargs))
+
+
+class LJ93Calculator(ArrayFFCalculator):
+    """Lennard-Jones 9-3 calculator."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        from arrayff.potentials import LJ93
+
+        super().__init__(LJ93(**kwargs))
 
 
 class EMTCalculator(ArrayFFCalculator):

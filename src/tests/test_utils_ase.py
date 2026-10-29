@@ -8,7 +8,7 @@ from ase.build import bulk
 from ase.neighborlist import neighbor_list as ase_neighbor_list
 
 from arrayff.utils.ase import atoms_to_arrays, species_of
-from arrayff.neighbors._table import neighbor_table
+from arrayff.neighbors._table import NeighborPaddedTable
 
 
 def _atoms():
@@ -35,7 +35,7 @@ def test_species_of():
 def test_neighbor_table_matches_ase():
     atoms = _atoms()
     cutoff = 6.0
-    table = neighbor_table(atoms, cutoff)
+    table = NeighborPaddedTable.from_ase(atoms, cutoff)
     i, j, shift, distance = ase_neighbor_list("ijSd", atoms, cutoff)
 
     assert int(table.mask.sum()) == len(i)
@@ -50,7 +50,7 @@ def test_neighbor_table_matches_ase():
 @pytest.mark.parametrize("backend", ["torch", "jax"])
 def test_neighbor_table_backend(backend):
     pytest.importorskip(backend)
-    table = neighbor_table(_atoms(), 6.0, backend=backend)
+    table = NeighborPaddedTable.from_ase(_atoms(), 6.0, backend=backend)
     assert tuple(table.index.shape) == (len(_atoms()), table.max_neighbors)
     assert table.to_backend("numpy").index.shape == table.index.shape
 
@@ -58,13 +58,13 @@ def test_neighbor_table_backend(backend):
 def test_neighbor_table_max_neighbors_too_small():
     atoms = _atoms()
     with pytest.raises(ValueError, match="max_neighbors"):
-        neighbor_table(atoms, 6.0, max_neighbors=1)
+        NeighborPaddedTable.from_ase(atoms, 6.0, max_neighbors=1)
 
 
 def test_empty_system():
     from ase import Atoms
 
     empty = Atoms()
-    table = neighbor_table(empty, 6.0)
+    table = NeighborPaddedTable.from_ase(empty, 6.0)
     assert table.index.shape == (0, 0)
     assert table.mask.shape == (0, 0)

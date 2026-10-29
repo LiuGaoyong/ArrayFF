@@ -17,9 +17,9 @@ import numpy as np
 from ase import Atoms
 
 from arrayff import ad
+from arrayff.neighbors._table import NeighborEdgeList, NeighborPaddedTable
 from arrayff.utils.ase import atoms_to_arrays, species_of
 from arrayff.utils.dispatch import to_backend, to_numpy
-from arrayff.neighbors._table import NeighborTable, neighbor_table
 
 __all__ = ["Potential"]
 
@@ -64,7 +64,7 @@ class Potential(abc.ABC):
             raise ValueError("skin must be non-negative")
         self._table_static: tuple | None = None
         self._table_positions: np.ndarray | None = None
-        self._table_cache: NeighborTable | None = None
+        self._table_cache: NeighborPaddedTable | None = None
 
     # -- to be implemented by subclasses ---------------------------------------
     @abc.abstractmethod
@@ -76,7 +76,7 @@ class Potential(abc.ABC):
         self,
         positions: Any,
         species: Any,
-        table: NeighborTable,
+        table: NeighborPaddedTable,
         cell: Any,
         pbc: Any,
         params: dict[str, Any],
@@ -118,7 +118,7 @@ class Potential(abc.ABC):
             self.skin,
         )
 
-    def _table(self, atoms: Atoms) -> NeighborTable:
+    def _table(self, atoms: Atoms) -> NeighborPaddedTable | NeighborEdgeList:
         """Return the neighbour table, cached according to ``skin``.
 
         * ``skin == 0``: reuse only when the geometry is bitwise unchanged.
@@ -141,13 +141,7 @@ class Potential(abc.ABC):
             if displacement <= tolerance:
                 return self._table_cache
 
-        table = neighbor_table(
-            atoms,
-            self._cutoff_for(atoms) + self.skin,
-            max_neighbors=self.max_neighbors,
-            backend=self.backend,
-            builder=self.builder,
-        )
+        table = self._build_table(atoms, self._cutoff_for(atoms) + self.skin)
         self._table_static = static
         self._table_positions = positions.copy()
         self._table_cache = table
@@ -189,6 +183,16 @@ class Potential(abc.ABC):
                 [sigma[5], sigma[1], sigma[3]],
                 [sigma[4], sigma[3], sigma[2]],
             ]
+        )
+
+    def _build_table(self, atoms: Atoms, cutoff: float) -> NeighborPaddedTable:
+        """Build the neighbour table; pairwise potentials override this."""
+        return NeighborPaddedTable.from_ase(
+            atoms,
+            cutoff,
+            max_neighbors=self.max_neighbors,
+            backend=self.backend,
+            builder=self.builder,
         )
 
     def clear_cache(self) -> None:

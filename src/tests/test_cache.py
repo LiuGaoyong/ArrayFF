@@ -7,7 +7,7 @@ import pytest
 from ase.build import bulk
 
 from arrayff.potentials import EMT
-from arrayff.neighbors._table import neighbor_table
+from arrayff.neighbors._table import NeighborPaddedTable
 
 
 def _atoms():
@@ -43,8 +43,8 @@ def test_clear_cache():
 def test_alternative_builders_match_sklearn(builder):
     pytest.importorskip(builder)
     atoms = _atoms()
-    reference = neighbor_table(atoms, 6.0, builder="sklearn")
-    other = neighbor_table(atoms, 6.0, builder=builder)
+    reference = NeighborPaddedTable.from_ase(atoms, 6.0, builder="sklearn")
+    other = NeighborPaddedTable.from_ase(atoms, 6.0, builder=builder)
     assert other.index.shape == reference.index.shape
     assert int(other.mask.sum()) == int(reference.mask.sum())
 

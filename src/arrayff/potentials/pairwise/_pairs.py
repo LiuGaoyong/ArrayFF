@@ -5,12 +5,12 @@ from __future__ import annotations
 from typing import Any
 
 from arrayff.utils.dispatch import do, dtype_of
-from arrayff.neighbors._table import NeighborTable
+from arrayff.neighbors._table import NeighborPaddedTable
 
 __all__ = ["pair_distances", "pair_vectors"]
 
 
-def pair_vectors(positions: Any, table: NeighborTable, cell: Any) -> Any:
+def pair_vectors(positions: Any, table: NeighborPaddedTable, cell: Any) -> Any:
     """Return the ``(N, M, 3)`` pair vectors ``r_j - r_i + S @ cell``.
 
     The shift term is skipped when ``cell`` is ``None``.
@@ -22,7 +22,9 @@ def pair_vectors(positions: Any, table: NeighborTable, cell: Any) -> Any:
     return vectors
 
 
-def pair_distances(positions: Any, table: NeighborTable, cell: Any) -> Any:
+def pair_distances(
+    positions: Any, table: NeighborPaddedTable, cell: Any
+) -> Any:
     """Return the ``(N, M)`` pair distances.
 
     Padding entries are replaced by ``1.0`` *before* the square root so that

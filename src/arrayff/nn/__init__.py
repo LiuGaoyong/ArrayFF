@@ -23,5 +23,16 @@ from arrayff.nn.base import TorchPotential
 from arrayff.nn.eam import EAMTorch
 from arrayff.nn.emt import EMTTorch
 from arrayff.nn.lj import LJTorch
+from arrayff.nn.pairwise import LJ93Torch, MorseTorch, PairwiseTorch
 
-__all__ = ["EAMTorch", "EMTTorch", "LJTorch", "TorchPotential", "nn", "torch"]
+__all__ = [
+    "EAMTorch",
+    "EMTTorch",
+    "LJ93Torch",
+    "LJTorch",
+    "MorseTorch",
+    "PairwiseTorch",
+    "TorchPotential",
+    "nn",
+    "torch",
+]

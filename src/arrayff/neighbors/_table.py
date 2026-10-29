@@ -18,7 +18,8 @@ from ase import Atoms
 from numpy.typing import DTypeLike
 
 from arrayff.neighbors._list import NeighborListBackendType, neighbor_list
-from arrayff.utils.dispatch import to_backend
+from arrayff.utils.backend import infer_backend
+from arrayff.utils.dispatch import do, to_backend, to_numpy
 
 __all__ = ["NeighborPaddedTable", "NeighborEdgeList"]
 
@@ -27,35 +28,60 @@ __all__ = ["NeighborPaddedTable", "NeighborEdgeList"]
 class NeighborListABC(ABC):
     """Base class for neighbour tables."""
 
+    def _first_array(self) -> np.ndarray:
+        """Return the first stored array (used for backend detection)."""
+        return getattr(self, next(iter(self.__dataclass_fields__)))
+
     def astype(self, dtype: DTypeLike = int) -> Self:
-        """Return a copy whose arrays have the specified dtype."""
-        return self.__class__(
-            **{
-                k: np.asarray(getattr(self, k), dtype=dtype)
-                for k in self.__dataclass_fields__.keys()
-            }
-        )
+        """Return a copy whose arrays have the specified dtype.
+
+        Only defined for numpy backed tables; convert to a backend *after*
+        fixing the dtype (:meth:`to_backend` does this for you).
+        """
+        if infer_backend(self._first_array()) != "numpy":
+            raise TypeError(
+                "astype() is only defined for numpy backed tables; "
+                "call it before to_backend()."
+            )
+        values: dict[str, np.ndarray] = {}
+        for name in self.__dataclass_fields__:
+            array = np.asarray(getattr(self, name))
+            values[name] = array.astype(bool if name == "mask" else dtype)
+        return self.__class__(**values)
 
     def to_backend(self, backend: str, dtype: DTypeLike = int) -> Self:
         """Return a copy whose arrays live on `backend`."""
+        current = infer_backend(self._first_array())
+        if current == backend:
+            return self
+        if current != "numpy":
+            # Detach from the current backend first (torch/jax -> numpy).
+            detached = self.__class__(
+                **{
+                    name: to_numpy(getattr(self, name))
+                    for name in self.__dataclass_fields__
+                }
+            )
+            if backend == "numpy":
+                return detached
+            return detached.to_backend(backend, dtype=dtype)
         obj = self.astype(dtype=dtype)
         if backend == "numpy":
             return obj
-        else:
-            return self.__class__(
-                **{
-                    k: to_backend(getattr(obj, k), backend)
-                    for k in self.__dataclass_fields__.keys()
-                }
-            )
+        return self.__class__(
+            **{
+                name: to_backend(getattr(obj, name), backend)
+                for name in self.__dataclass_fields__
+            }
+        )
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def empty(cls, *args, **kwargs) -> Self:
         pass
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def from_ase(
         cls,
         atoms: Atoms,
@@ -78,9 +104,15 @@ class NeighborEdgeList(NeighborListABC):
 
     @cached_property
     def shift(self) -> np.ndarray:
-        """Return the combined shift array."""
-        lst = [self.shift_x, self.shift_y, self.shift_z]
-        return np.column_stack(lst).astype(int)
+        """Return the combined ``(E, 3)`` shift array.
+
+        Stays on the table backend: ``np.column_stack`` would silently detach
+        (or fail on) torch/jax tensors.
+        """
+        parts = [self.shift_x, self.shift_y, self.shift_z]
+        if infer_backend(self.shift_x) == "numpy":
+            return np.column_stack(parts).astype(np.int64)
+        return do("stack", parts, axis=-1)
 
     def __post_init__(self) -> None:
         msg = r"The shape of {} must be {}, but got {}."
@@ -270,7 +302,8 @@ class NeighborPaddedTable(NeighborListABC):
         if max_neighbors is not None:
             if int(max_neighbors) < width:
                 raise ValueError(
-                    f"max_neighbors={max_neighbors} is smaller than the largest "
+                    f"max_neighbors={max_neighbors} is smaller than the "
+                    f"largest "
                     f"neighbour count ({width})."
                 )
             width = int(max_neighbors)
@@ -290,3 +323,24 @@ class NeighborPaddedTable(NeighborListABC):
         mask[rows, cols] = True
         table = cls(index=index, shift=table_shift, mask=mask)
         return table.to_backend(backend)
+
+    def to_edgelist(self) -> NeighborEdgeList:
+        """Flatten the padded table into an edge list (numpy tables only)."""
+        if infer_backend(self.index) != "numpy":
+            raise TypeError(
+                "to_edgelist() requires a numpy backed table; convert the "
+                "result afterwards."
+            )
+        n_atoms, width = self.index.shape
+        mask = np.asarray(self.mask, dtype=bool)
+        rows = np.broadcast_to(np.arange(n_atoms)[:, None], (n_atoms, width))
+        source = rows[mask].astype(np.int64)
+        target = np.asarray(self.index)[mask].astype(np.int64)
+        shift = np.asarray(self.shift)[mask].astype(np.int64)
+        return NeighborEdgeList(
+            source=source,
+            target=target,
+            shift_x=shift[:, 0],
+            shift_y=shift[:, 1],
+            shift_z=shift[:, 2],
+        )

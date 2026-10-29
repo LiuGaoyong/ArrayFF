@@ -6,7 +6,9 @@ from arrayff.calculators.ase import (
     ArrayFFCalculator,
     EAMCalculator,
     EMTCalculator,
+    LJ93Calculator,
     LJCalculator,
+    MorseCalculator,
     QEqCalculator,
 )
 
@@ -14,6 +16,8 @@ __all__ = [
     "ArrayFFCalculator",
     "EAMCalculator",
     "EMTCalculator",
+    "LJ93Calculator",
     "LJCalculator",
+    "MorseCalculator",
     "QEqCalculator",
 ]

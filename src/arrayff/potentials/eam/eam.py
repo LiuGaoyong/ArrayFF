@@ -22,7 +22,7 @@ from arrayff.potentials.pairwise._pairs import pair_distances
 from arrayff.potentials.base import Potential
 from arrayff.potentials.registry import register_potential
 from arrayff.utils.dispatch import do, to_backend
-from arrayff.neighbors._table import NeighborTable
+from arrayff.neighbors._table import NeighborPaddedTable
 
 __all__ = ["EAM"]
 
@@ -73,7 +73,7 @@ class EAM(Potential):
         self,
         positions: Any,
         species: Any,
-        table: NeighborTable,
+        table: NeighborPaddedTable,
         cell: Any,
         pbc: Any,
         params: dict[str, Any],
