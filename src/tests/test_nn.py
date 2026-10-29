@@ -8,7 +8,7 @@ torch = pytest.importorskip("torch")
 
 from ase.build import bulk  # noqa: E402
 
-from arrayff.nn import EMTTorch, LJTorch  # noqa: E402
+from arrayff.potentials import EMTTorch, LJTorch  # noqa: E402
 from arrayff.potentials import EMT, LennardJones  # noqa: E402
 
 

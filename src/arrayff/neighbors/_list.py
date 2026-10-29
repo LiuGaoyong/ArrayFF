@@ -12,6 +12,8 @@ from numpy.typing import ArrayLike
 from scipy import sparse as sp
 from sklearn.neighbors import NearestNeighbors
 
+from arrayff.utils.exceptions import MissingBackendError
+
 __all__ = [
     "neighbor_list",
     "distance_pairs",
@@ -69,10 +71,14 @@ def _sklearn_get_distance_pairs(
     cell: np.ndarray | Cell | None = None,
     max_distance: float = float("inf"),
     return_distance: bool = True,
+    pbc: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
     if not isinstance(cell, Cell):
         cell = Cell.new(cell=cell)
-    if cell.rank == 0:
+    if pbc is None:
+        pbc = np.asarray(getattr(cell, "pbc", np.ones(3, dtype=bool)))
+    pbc = np.asarray(pbc, dtype=bool)
+    if not pbc.any():
         source, target, dist = _sklearn_query_ball_point(
             p1=p1,
             p2=p2,
@@ -81,6 +87,11 @@ def _sklearn_get_distance_pairs(
         )
         shift = np.zeros((len(source), 3), int)
         return source, target, shift, dist
+    if not pbc.all():
+        raise NotImplementedError(
+            "mixed periodic boundary conditions are not supported by the "
+            "sklearn neighbour backend; use backend='ase_3loop'"
+        )
     else:
         assert np.isfinite(max_distance), (
             "max_distance must be finite for periodic cell."
@@ -142,6 +153,7 @@ def _pymatgen_get_distance_pairs(
     cell: np.ndarray | Cell | None = None,
     max_distance: float = float("inf"),
     return_distance: bool = True,
+    pbc: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray | None]:
     if not isinstance(cell, Cell):
         cell = Cell.new(cell=cell)
@@ -155,14 +167,23 @@ def _pymatgen_get_distance_pairs(
     l1, l2 = p1.shape[0], p2.shape[0]
     max_distance = float(max_distance)
     assert max_distance > 0
+    if pbc is None:
+        pbc = np.asarray(getattr(cell, "pbc", np.ones(3, dtype=bool)))
+    pbc = np.asarray(pbc, dtype=bool)
 
-    if cell.rank == 0:
+    if not pbc.any():
         return _sklearn_get_distance_pairs(
             p1=p1,
             p2=p2,
             cell=cell,
             max_distance=max_distance,
             return_distance=return_distance,
+            pbc=pbc,
+        )
+    if not pbc.all():
+        raise NotImplementedError(
+            "mixed periodic boundary conditions are not supported by the "
+            "pymatgen neighbour backend; use backend='ase_3loop'"
         )
     else:
         try:
@@ -185,7 +206,7 @@ def _pymatgen_get_distance_pairs(
             np.ascontiguousarray(p1, dtype=float),
             np.ascontiguousarray(p2, dtype=float),
             r=max_distance,
-            pbc=np.ascontiguousarray(cell.array.any(1), dtype=np.int64),
+            pbc=np.ascontiguousarray(pbc, dtype=np.int64),
             lattice=np.ascontiguousarray(cell.array, dtype=float),
             tol=1e-8,
         )
@@ -216,7 +237,8 @@ def distance_pairs(
     p2: np.ndarray | None = None,
     cell: np.ndarray | Cell | None = None,
     cutoff: float = 6.0,
-    backend: str | Literal["sklearn", "pmg", "pymatgen"] = "pmg",
+    backend: str | Literal["sklearn", "pmg", "pymatgen"] = "sklearn",
+    pbc: ArrayLike | None = None,
 ) -> tuple[np.ndarray, ...]:
     """Compute distance pairs for two points set.
 
@@ -261,10 +283,11 @@ def distance_pairs(
     assert p1.ndim == p2.ndim == 2
     assert p1.shape[1] == p2.shape[1] == 3
     cell = Cell.new(cell)
-    if cell.rank != 0:
-        assert np.isfinite(cutoff), (
-            "The `cutoff` must is finite number for periodic cell."
-        )
+    if pbc is None:
+        pbc = np.asarray(getattr(cell, "pbc", np.ones(3, dtype=bool)))
+    pbc = np.asarray(pbc, dtype=bool)
+    if pbc.any() and not np.isfinite(cutoff):
+        raise ValueError("cutoff must be finite for a periodic cell")
 
     if backend.lower() == "sklearn":
         i, j, S, d = _sklearn_get_distance_pairs(
@@ -273,6 +296,7 @@ def distance_pairs(
             cell=cell,
             max_distance=cutoff,
             return_distance=bool("d" in quantities),
+            pbc=pbc,
         )
     elif backend.lower() in ("pmg", "pymatgen"):
         j, i, S, d = _pymatgen_get_distance_pairs(
@@ -281,6 +305,7 @@ def distance_pairs(
             cell=cell,
             max_distance=cutoff,
             return_distance=bool("d" in quantities),
+            pbc=pbc,
         )
         # Swap i-j & p1-p2 for that the result match:
         #       D = p2[j] - p1[i] + S @ a.cell
@@ -351,11 +376,11 @@ def _matscipy_neighbor_list(
         from matscipy.neighbours import (  # type: ignore  # noqa: F401
             neighbour_list as _matscipy_neighbour_list,
         )
-    except Exception:
-        raise Exception(
-            "Please install `matscipy` to speed up "  #
-            "the calculation of neighbor list.",
-        )
+    except ImportError as exc:
+        raise MissingBackendError(
+            "matscipy is required for builder='matscipy'; "
+            "install it with `pip install arrayff[builders]`"
+        ) from exc
     if a.cell.rank != 0:
         return tuple(
             _matscipy_neighbour_list(
@@ -386,11 +411,11 @@ def _vesin_neighbor_list(
 ) -> tuple[np.ndarray, ...]:
     try:
         from vesin import ase_neighbor_list  # type: ignore
-    except Exception:
-        raise Exception(
-            "Please install `vesin` to speed up "  #
-            "the calculation of neighbor list.",
-        )
+    except ImportError as exc:
+        raise MissingBackendError(
+            "vesin is required for builder='vesin'; "
+            "install it with `pip install arrayff[builders]`"
+        ) from exc
     return tuple(
         ase_neighbor_list(
             quantities=quantities,
@@ -496,8 +521,18 @@ def neighbor_list(
         if s not in quantities:
             quantities += s
 
-    if len(a) <= 1 and a.cell.rank == 0:
-        return tuple(np.array([]) for _ in quantities)
+    if len(a) <= 1 and not np.asarray(a.pbc, dtype=bool).any():
+        empty: list[np.ndarray] = []
+        for quantity in old_quantities:
+            if quantity in ("i", "j"):
+                empty.append(np.empty(0, dtype=np.int64))
+            elif quantity == "S":
+                empty.append(np.empty((0, 3), dtype=np.int64))
+            elif quantity == "D":
+                empty.append(np.empty((0, 3), dtype=float))
+            else:  # "d"
+                empty.append(np.empty(0, dtype=float))
+        return tuple(empty)
 
     if indices is not None:
         indices = np.asarray(indices, dtype=int)
@@ -505,18 +540,14 @@ def neighbor_list(
         if len(indices) == 0:
             indices = None
         else:
-            assert 0 <= indices.min() <= indices.max() < len(a), (
-                "The indices must be in range [0, len(a))."
-            )
+            if not (0 <= indices.min() <= indices.max() < len(a)):
+                raise ValueError("indices must be in range [0, len(a))")
             if len(indices) == len(a):
                 indices = None
-    if indices is not None:
-        assert bothways is True, (
-            "Only support `bothways=True` "  #
-            "for `indices` not None."
-        )
+    if indices is not None and bothways is not True:
+        raise ValueError("indices is only supported with bothways=True")
 
-    msg = "The {} is not support for non-empty indices."
+    msg = "The {} backend is not supported for non-empty indices."
     if backend == "ase_kdtree":
         return _ase_neighbor_list_kdtree(
             quantities=quantities,
@@ -528,7 +559,8 @@ def neighbor_list(
             sorted=sorted,
         )
     elif backend == "ase_3loop":
-        assert indices is None, msg.format(backend)
+        if indices is not None:
+            raise ValueError(msg.format(backend))
         result = _ase_neighbor_list_3loop(
             quantities=quantities,
             a=a,
@@ -537,18 +569,43 @@ def neighbor_list(
             max_nbins=int(max_nbins),
         )  # type: ignore
     elif backend in ("sklearn", "pmg", "pymatgen"):
-        if indices is None:
-            indices = np.arange(len(a))
-        result = distance_pairs(
-            quantities=quantities,
-            p1=a.positions[indices],
-            p2=a.positions,
-            cell=a.cell,
-            cutoff=cutoff,
-            backend=backend,
-        )
+        pbc = np.asarray(a.pbc, dtype=bool)
+        if pbc.any() and not pbc.all():
+            # The sklearn/pymatgen wrappers only implement all-periodic or
+            # non-periodic cells; fall back to ASE for mixed boundary
+            # conditions instead of silently treating all axes as periodic.
+            if indices is not None:
+                raise ValueError(
+                    "mixed pbc with indices is only supported by "
+                    "backend='ase_kdtree'"
+                )
+            result = _ase_neighbor_list_3loop(
+                quantities=quantities,
+                a=a,
+                cutoff=float(cutoff),
+                self_interaction=self_interaction,
+                max_nbins=int(max_nbins),
+            )  # type: ignore
+        else:
+            selected = indices
+            p1 = a.positions if selected is None else a.positions[selected]
+            result = distance_pairs(
+                quantities=quantities,
+                p1=p1,
+                p2=a.positions,
+                cell=a.cell,
+                cutoff=cutoff,
+                backend=backend,
+                pbc=pbc,
+            )
+            if selected is not None:
+                result = list(result)
+                i_index = quantities.index("i")
+                result[i_index] = selected[result[i_index]]
+                result = tuple(result)
     elif backend == "vesin":
-        assert indices is None, msg.format(backend)
+        if indices is not None:
+            raise ValueError(msg.format(backend))
         result = _vesin_neighbor_list(
             quantities=quantities,
             a=a,
@@ -557,6 +614,8 @@ def neighbor_list(
             max_nbins=int(max_nbins),
         )  # type: ignore
     elif backend == "matscipy":
+        if indices is not None:
+            raise ValueError(msg.format(backend))
         result = _matscipy_neighbor_list(
             quantities=quantities,
             a=a,
@@ -585,6 +644,6 @@ def neighbor_list(
     dct = {k: v[cond] for k, v in dct.items()}
     if sorted:
         i, j, (Sx, Sy, Sz) = dct["i"], dct["j"], dct["S"].T
-        idx: np.ndarray = np.lexsort((i, j, Sz, Sy, Sx))
+        idx: np.ndarray = np.lexsort((Sx, Sy, Sz, j, i))
         dct = {k: v[idx] for k, v in dct.items()}
     return tuple(dct[k] for k in old_quantities)

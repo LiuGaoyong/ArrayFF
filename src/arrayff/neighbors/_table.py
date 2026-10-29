@@ -169,7 +169,7 @@ class NeighborEdgeList(NeighborListABC):
             )
         n_atoms = len(atoms)
         if n_atoms == 0 or cutoff <= 0.0:
-            return cls.empty()
+            return cls.empty().to_backend(backend)
         i, j, shift = neighbor_list(
             "ijS",
             a=atoms,
@@ -191,6 +191,48 @@ class NeighborEdgeList(NeighborListABC):
             .astype(int)
             .to_backend(backend)
         )
+
+    def to_padded(
+        self,
+        n_atoms: int,
+        *,
+        max_neighbors: int | None = None,
+    ) -> NeighborPaddedTable:
+        """Return a padded view of this edge list.
+
+        The conversion is a pure table operation (integer indices only);
+        values are copied to the current backend afterwards.
+        """
+        backend = infer_backend(self.source)
+        source = np.asarray(to_numpy(self.source), dtype=np.int64)
+        target = np.asarray(to_numpy(self.target), dtype=np.int64)
+        shift = np.asarray(to_numpy(self.shift), dtype=np.int64)
+        if len(source) == 0:
+            return NeighborPaddedTable.empty(n_atoms).to_backend(backend)
+
+        counts = np.bincount(source, minlength=n_atoms)
+        width = int(np.max(counts, initial=0))
+        if max_neighbors is not None:
+            if int(max_neighbors) < width:
+                raise ValueError(
+                    f"max_neighbors={max_neighbors} is smaller than the "
+                    f"largest neighbour count ({width})."
+                )
+            width = int(max_neighbors)
+
+        order = np.argsort(source, kind="stable")
+        rows = source[order]
+        offsets = np.concatenate(([0], np.cumsum(counts)[:-1]))
+        cols = np.arange(len(order), dtype=np.int64) - offsets[rows]
+
+        index = np.zeros((n_atoms, width), dtype=np.int64)
+        table_shift = np.zeros((n_atoms, width, 3), dtype=np.int64)
+        mask = np.zeros((n_atoms, width), dtype=bool)
+        index[rows, cols] = target[order]
+        table_shift[rows, cols] = shift[order]
+        mask[rows, cols] = True
+        table = NeighborPaddedTable(index=index, shift=table_shift, mask=mask)
+        return table.to_backend(backend)
 
 
 @dc.dataclass(frozen=True)
@@ -235,7 +277,7 @@ class NeighborPaddedTable(NeighborListABC):
 
     @property
     def n_neighbors_total(self) -> int:
-        return int(np.sum(self.mask))
+        return int(np.asarray(to_numpy(self.mask)).sum())
 
     @classmethod
     @override
@@ -281,7 +323,7 @@ class NeighborPaddedTable(NeighborListABC):
             )
         n_atoms = len(atoms)
         if n_atoms == 0 or cutoff <= 0.0:
-            return cls.empty(n_atoms)
+            return cls.empty(n_atoms).to_backend(backend)
         i, j, shift = neighbor_list(
             "ijS",
             a=atoms,
@@ -295,7 +337,7 @@ class NeighborPaddedTable(NeighborListABC):
         j = np.asarray(j, dtype=np.int64)
         shift = np.asarray(shift, dtype=np.int64)
         if len(i) == 0:
-            return cls.empty(n_atoms)
+            return cls.empty(n_atoms).to_backend(backend)
 
         counts = np.bincount(i, minlength=n_atoms)
         width = int(np.max(counts, initial=0))

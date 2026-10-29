@@ -7,7 +7,8 @@ import pytest
 from ase.build import bulk
 from ase.calculators.emt import EMT as AseEMT
 
-from arrayff.calculators import EMTCalculator, LJCalculator, QEqCalculator
+from arrayff.electrostatics import QEqCalculator
+from arrayff.potentials import EMTCalculator, LJCalculator
 from arrayff.potentials import EMT, LennardJones
 
 
@@ -54,3 +55,13 @@ def test_calculator_runs_optimizer_step():
     initial = atoms.get_potential_energy()
     FIRE(atoms, logfile=None).run(steps=3)
     assert atoms.get_potential_energy() < initial
+
+
+def test_calculator_properties_are_dynamic():
+    from ase.build import bulk
+
+    atoms = bulk("Ar", "fcc", a=5.26, cubic=True)
+    atoms.calc = LJCalculator()
+    assert "charges" not in atoms.calc.implemented_properties
+    atoms.get_potential_energy()
+    assert "forces" not in atoms.calc.results

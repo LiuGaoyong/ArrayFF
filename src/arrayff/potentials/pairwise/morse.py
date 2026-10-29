@@ -48,6 +48,8 @@ class Morse(PairwisePotential):
         max_neighbors: int | None = None,
         builder: str = "sklearn",
         skin: float = 0.0,
+        jit: bool = False,
+        method: str = "analytic",
     ) -> None:
         super().__init__(
             cutoff,
@@ -59,6 +61,8 @@ class Morse(PairwisePotential):
             max_neighbors=max_neighbors,
             builder=builder,
             skin=skin,
+            jit=jit,
+            method=method,
         )
         self.r0 = r0
         self.depth = depth

@@ -21,13 +21,20 @@ def jit(
 ) -> Callable[..., Any]:
     """Compile ``fn`` with the backend compiler.
 
-    ``backend="jax"`` uses ``jax.jit``, ``backend="torch"`` uses
-    ``torch.compile``.
+    ``backend="jax"`` uses ``jax.jit``; torch uses ``torch.jit.trace`` via
+    autoray.  Functions written with :func:`arrayff.utils.dispatch.do` can be
+    traced; functions that also call backend AD transforms cannot (except
+    JAX).
 
     Only functions written with :func:`arrayff.utils.dispatch.do` are traced,
     so kernels must not call backend specific functions directly.
     """
     return ar.autojit(fn, backend=backend, compiler_opts=compiler_opts)
+
+
+def autojit(fn: Callable[..., Any], backend: str) -> Callable[..., Any]:
+    """Alias used by :class:`arrayff.potentials.base.Potential`."""
+    return ar.autojit(fn, backend=backend)
 
 
 def enable_x64() -> None:

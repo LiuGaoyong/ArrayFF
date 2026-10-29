@@ -17,7 +17,7 @@ jobs:
 
       - name: Install
         run: |
-          uv pip install --system -e ".[torch,jax,numpy-ad]"
+          uv pip install --system -e ".[torch,jax,builders]"
           uv pip install --system pytest pytest-xdist ruff
 
       - name: Lint
@@ -25,6 +25,23 @@ jobs:
 
       - name: Test
         run: pytest -q -n auto
+
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Install core + builders (no torch/jax)
+        run: |
+          uv pip install --system -e ".[builders]"
+          uv pip install --system pytest
+      - name: Import purity
+        run: |
+          python -c "import sys, arrayff, arrayff.potentials; assert 'torch' not in sys.modules and 'jax' not in sys.modules"
+      - name: Test without optional backends
+        run: pytest -q
 
   benchmark:
     runs-on: ubuntu-latest
@@ -35,7 +52,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: |
-          uv pip install --system -e ".[torch,jax,numpy-ad]"
+          uv pip install --system -e ".[torch,jax,builders]"
           uv pip install --system pytest
-      - name: Timing table
-        run: pytest -s src/tests-benchmark/bench_potentials.py -q
+      - name: Timing and derivative tables
+        run: |
+          pytest -s src/tests-benchmark/bench_potentials.py -q
+          pytest -s src/tests-benchmark/bench_derivatives.py -q

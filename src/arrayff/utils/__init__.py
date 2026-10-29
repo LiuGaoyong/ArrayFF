@@ -24,6 +24,7 @@ from arrayff.utils.exceptions import (
     ShapeError,
 )
 from arrayff.utils.jit import enable_x64, jit, x64_enabled
+from arrayff.utils.optional import is_available, require
 
 __all__ = [
     "ARRAY_BACKENDS",
@@ -37,7 +38,9 @@ __all__ = [
     "dtype_of",
     "enable_x64",
     "infer_backend",
+    "is_available",
     "jit",
+    "require",
     "register_advect_alias",
     "require_same_backend",
     "resolve_ad_backend",

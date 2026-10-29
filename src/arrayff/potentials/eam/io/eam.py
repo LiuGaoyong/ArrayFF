@@ -9,7 +9,7 @@ The layout follows LAMMPS / ``ase.calculators.eam``:
 * ``nr`` values of ``r * phi`` for every ``i >= j`` pair.
 
 Tabulated functions are stored as plain arrays so any backend can evaluate
-them; interpolation happens in :mod:`arrayff.ops.interp`.
+them; interpolation happens in :mod:`arrayff.utils.interp`.
 """
 
 from __future__ import annotations
@@ -55,16 +55,31 @@ def read_setfl(path: str | pathlib.Path) -> EAMTable:
     for line in lines[3:]:
         data.extend(line.split())
 
+    if not data:
+        raise ValueError(f"{path}: empty EAM setfl file")
     nelements = int(data[0])
+    if nelements <= 0:
+        raise ValueError(f"{path}: nelements must be positive")
     cursor = 1
-    data[cursor : cursor + nelements]
-    cursor += nelements
+    cursor += nelements  # element names (the atomic numbers follow later)
     nrho = int(data[cursor])
     drho = float(data[cursor + 1])
     nr = int(data[cursor + 2])
     dr = float(data[cursor + 3])
     cutoff = float(data[cursor + 4])
     cursor += 5
+    if nrho <= 0 or nr <= 0:
+        raise ValueError(f"{path}: nrho and nr must be positive")
+    expected = (
+        cursor
+        + nelements * (4 + nrho + nr)
+        + nr * nelements * (nelements + 1) // 2
+    )
+    if len(data) < expected:
+        raise ValueError(
+            f"{path}: truncated EAM setfl file "
+            f"(expected at least {expected} values, got {len(data)})"
+        )
 
     embedded = np.zeros((nelements, nrho))
     density = np.zeros((nelements, nr))

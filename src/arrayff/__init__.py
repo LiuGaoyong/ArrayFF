@@ -1,14 +1,16 @@
 """ArrayFF: force fields on multiple array backends.
 
 The package is organised as a thin dispatch layer (:mod:`arrayff.utils`),
-backend agnostic autodiff (:mod:`arrayff.ad`) and numerical kernels that never
-import a concrete array library.
+backend agnostic autodiff (:mod:`arrayff.utils.ad`) and numerical kernels that
+never import a concrete array library.
 """
 
 from __future__ import annotations
 
-from arrayff import ad, utils
+from arrayff import utils
+from arrayff.electrostatics import QEq
 from arrayff.potentials import (
+    CompositePotential,
     LennardJones,
     available_potentials,
     get_potential,
@@ -17,9 +19,10 @@ from arrayff.potentials import (
 __version__ = "0.0.1"
 
 __all__ = [
+    "CompositePotential",
     "LennardJones",
+    "QEq",
     "__version__",
-    "ad",
     "available_potentials",
     "get_potential",
     "utils",

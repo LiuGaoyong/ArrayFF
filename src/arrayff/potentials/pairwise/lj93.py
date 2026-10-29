@@ -19,6 +19,9 @@ def _per_element(
     value: float | dict[int, float], elements: np.ndarray
 ) -> np.ndarray:
     if isinstance(value, dict):
+        missing = [int(z) for z in elements if int(z) not in value]
+        if missing:
+            raise KeyError(f"Missing LJ93 parameters for Z={missing}")
         return np.array([float(value[int(z)]) for z in elements])
     return np.full(len(elements), float(value))
 
@@ -44,6 +47,8 @@ class LennardJones93(PairwisePotential):
         max_neighbors: int | None = None,
         builder: str = "sklearn",
         skin: float = 0.0,
+        jit: bool = False,
+        method: str = "analytic",
     ) -> None:
         super().__init__(
             cutoff,
@@ -55,19 +60,25 @@ class LennardJones93(PairwisePotential):
             max_neighbors=max_neighbors,
             builder=builder,
             skin=skin,
+            jit=jit,
+            method=method,
         )
         self.r0 = r0
         self.depth = depth
         self.mixing = {"r0": "arithmetic", "depth": "geometric"}
 
     def element_parameters(self, elements: np.ndarray) -> PairParameters:
+        r0 = _per_element(self.r0, elements)
+        depth = _per_element(self.depth, elements)
+        if np.any(r0 <= 0.0):
+            raise ValueError("r0 must be positive")
+        if np.any(depth < 0.0):
+            raise ValueError("depth must be non-negative")
         return PairParameters(
             elements=np.asarray(elements, dtype=np.int64),
             values={
-                "r0": to_backend(_per_element(self.r0, elements), self.backend),
-                "depth": to_backend(
-                    _per_element(self.depth, elements), self.backend
-                ),
+                "r0": to_backend(r0, self.backend),
+                "depth": to_backend(depth, self.backend),
             },
             mixing=self.mixing,
             cutoff=None,

@@ -13,7 +13,12 @@ import pathlib
 import pytest
 
 BACKEND_NAMES = {"np", "numpy", "torch", "jax", "jnp"}
-KERNEL_FUNCTIONS = {"energy_arrays"}
+KERNEL_FUNCTIONS = {
+    "energy_arrays",
+    "evaluate_arrays",
+    "forces_arrays",
+    "stress_arrays",
+}
 
 
 def _kernel_sources() -> list[tuple[pathlib.Path, ast.FunctionDef]]:

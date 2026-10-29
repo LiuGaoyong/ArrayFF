@@ -1,12 +1,11 @@
-"""Torch wrapper for tabulated EAM potentials."""
+"""Optional torch wrapper for tabulated EAM potentials."""
 
 from __future__ import annotations
-
 
 import torch
 from torch import nn
 
-from arrayff.nn.base import TorchPotential
+from arrayff.potentials._torch import TorchPotential
 from arrayff.potentials.eam.eam import EAM
 
 __all__ = ["EAMTorch"]

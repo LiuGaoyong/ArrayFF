@@ -75,12 +75,11 @@ def test_forces_match_finite_differences():
 
 @pytest.mark.parametrize("backend", ["numpy", "torch", "jax", "advect"])
 def test_backends_agree(backend):
-    pytest.importorskip("jax")
+    pytest.importorskip(backend)
     if backend == "jax":
         from arrayff.utils import enable_x64
 
         enable_x64()
-    pytest.importorskip(backend)
     atoms = _bulk()
     reference = _arrayff()
     energy_ref, forces_ref = reference.energy_and_forces(atoms)

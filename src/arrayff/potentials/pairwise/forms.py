@@ -69,6 +69,10 @@ class PairForm(abc.ABC):
     def energy(self, r: Any, params: dict[str, Any]) -> Any:
         """Return the uncut pair energy for distances ``r``."""
 
+    @abc.abstractmethod
+    def d_energy_dr(self, r: Any, params: dict[str, Any]) -> Any:
+        """Return the analytic derivative ``d energy / d r``."""
+
     def cutoff_energy(self, rc: Any, params: dict[str, Any]) -> Any:
         """Energy at the cutoff, used for the shifted convention."""
         return self.energy(rc, params)
@@ -106,6 +110,17 @@ class GeneralizedLJ(PairForm):
             - (self.m / (self.m - self.n)) * x**self.n
         )
 
+    def d_energy_dr(self, r: Any, params: dict[str, Any]) -> Any:
+        x = params["r0"] / r
+        prefactor = params["depth"]
+        factor = self.m * self.n / (self.m - self.n)
+        return (
+            -prefactor
+            * (params["r0"] / (r * r))
+            * factor
+            * (x ** (self.m - 1) - x ** (self.n - 1))
+        )
+
 
 class Morse(PairForm):
     """Morse potential ``depth * (e^{-2a(r-r0)} - 2 e^{-a(r-r0)})``."""
@@ -121,3 +136,12 @@ class Morse(PairForm):
     def energy(self, r: Any, params: dict[str, Any]) -> Any:
         exponent = do("exp", -params["a"] * (r - params["r0"]))
         return params["depth"] * (exponent * exponent - 2.0 * exponent)
+
+    def d_energy_dr(self, r: Any, params: dict[str, Any]) -> Any:
+        exponent = do("exp", -params["a"] * (r - params["r0"]))
+        return (
+            2.0
+            * params["a"]
+            * params["depth"]
+            * (exponent - exponent * exponent)
+        )

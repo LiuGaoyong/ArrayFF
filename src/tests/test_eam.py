@@ -49,11 +49,11 @@ def test_energy_and_forces_match_ase(table_file):
 
 @pytest.mark.parametrize("backend", ["torch", "jax", "advect"])
 def test_backends_agree(table_file, backend):
+    pytest.importorskip(backend)
     if backend == "jax":
         from arrayff.utils import enable_x64
 
         enable_x64()
-    pytest.importorskip(backend)
     atoms = _atoms()
     energy_ref, forces_ref = EAM(table_file).energy_and_forces(atoms)
     energy, forces = EAM(table_file, backend=backend).energy_and_forces(atoms)
@@ -82,3 +82,17 @@ def test_unknown_element(table_file):
     atoms = bulk("Ag", "fcc", a=4.09, cubic=True)
     with pytest.raises(KeyError, match="Z=47"):
         EAM(table_file).energy(atoms)
+
+
+def test_analytic_matches_autodiff_and_stress(table_file):
+    atoms = _atoms()
+    calc = EAM(table_file)
+    analytic = calc.energy_and_forces(atoms, method="analytic")
+    autodiff = calc.energy_and_forces(atoms, method="autodiff")
+    assert analytic[0] == pytest.approx(autodiff[0], rel=1e-12)
+    np.testing.assert_allclose(analytic[1], autodiff[1], atol=1e-8)
+    np.testing.assert_allclose(
+        calc.stress(atoms, method="analytic"),
+        calc.stress(atoms, method="autodiff"),
+        atol=1e-8,
+    )

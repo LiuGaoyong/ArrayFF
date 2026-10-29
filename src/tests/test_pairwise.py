@@ -102,11 +102,11 @@ def test_edges_and_padded_layouts_agree():
 
 @pytest.mark.parametrize("backend", ["torch", "jax"])
 def test_morse_backends_agree(backend):
+    pytest.importorskip(backend)
     if backend == "jax":
         from arrayff.utils import enable_x64
 
         enable_x64()
-    pytest.importorskip(backend)
     atoms = bulk("Ar", "fcc", a=5.26, cubic=True).repeat((2, 2, 2))
     reference = Morse(r0=3.8, depth=0.01, a=1.5).energy_and_forces(atoms)
     other = Morse(r0=3.8, depth=0.01, a=1.5, backend=backend).energy_and_forces(
@@ -123,7 +123,7 @@ def test_potentials_are_registered():
 
 def test_morse_torch_matches_morse():
     torch = pytest.importorskip("torch")
-    from arrayff.nn import MorseTorch
+    from arrayff.potentials import MorseTorch
 
     atoms = bulk("Ar", "fcc", a=5.26, cubic=True).repeat((2, 2, 2))
     model = MorseTorch(

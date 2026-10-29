@@ -55,11 +55,11 @@ def test_forces_match_finite_differences():
 
 @pytest.mark.parametrize("backend", ["torch", "jax"])
 def test_backends_agree(backend):
+    pytest.importorskip(backend)
     if backend == "jax":
         from arrayff.utils import enable_x64
 
         enable_x64()
-    pytest.importorskip(backend)
     atoms = _water()
     reference = QEq(**PARAMS).charges(atoms)
     charges = QEq(**PARAMS, backend=backend).charges(atoms)

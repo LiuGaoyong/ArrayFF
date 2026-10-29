@@ -15,7 +15,7 @@ import numpy as np
 from ase.data import chemical_symbols
 from ase.units import Bohr
 
-from arrayff.potentials.pairwise._pairs import pair_distances
+from arrayff.potentials.pairwise._pairs import pair_distances, pair_vectors
 from arrayff.potentials.base import Potential
 from arrayff.potentials.registry import register_potential
 from arrayff.utils.dispatch import do, to_backend
@@ -94,8 +94,11 @@ class EMT(Potential):
         max_neighbors: int | None = None,
         builder: str = "sklearn",
         skin: float = 0.0,
+        jit: bool = False,
+        method: str = "analytic",
     ) -> None:
         self.asap_cutoff = bool(asap_cutoff)
+        self._param_cache: dict[tuple[int, ...], dict[str, Any]] = {}
         self.rc, rc_list, self.acut = _cutoff(self.asap_cutoff, None)
         super().__init__(
             cutoff or rc_list,
@@ -104,6 +107,8 @@ class EMT(Potential):
             max_neighbors=max_neighbors,
             builder=builder,
             skin=skin,
+            jit=jit,
+            method=method,
         )
 
     def _cutoff_for(self, atoms) -> float:
@@ -112,6 +117,10 @@ class EMT(Potential):
         return _cutoff(True, np.asarray(atoms.numbers))[1]
 
     def element_parameters(self, elements: np.ndarray) -> dict[str, Any]:
+        key = tuple(int(z) for z in elements)
+        cached = self._param_cache.get(key)
+        if cached is not None:
+            return cached
         rows = []
         for z in elements:
             symbol = chemical_symbols[int(z)]
@@ -121,6 +130,7 @@ class EMT(Potential):
                 )
             rows.append(EMT_PARAMETERS[symbol])
         table = np.array(rows, dtype=float)
+        rc, rc_list, acut = _cutoff(self.asap_cutoff, elements)
         s0 = table[:, 1] * Bohr
         eta2 = table[:, 3] / Bohr
         kappa = table[:, 4] / Bohr
@@ -128,7 +138,7 @@ class EMT(Potential):
         gamma2 = np.empty(len(rows))
         for i, (s0_i, eta2_i, kappa_i) in enumerate(zip(s0, eta2, kappa)):
             gamma1[i], gamma2[i] = _gamma1_gamma2(
-                float(s0_i), float(eta2_i), float(kappa_i), self.rc, self.acut
+                float(s0_i), float(eta2_i), float(kappa_i), rc, acut
             )
         data = {
             "E0": table[:, 0],
@@ -140,29 +150,41 @@ class EMT(Potential):
             "n0": table[:, 6] / Bohr**3,
             "inv12gamma1": 1.0 / (12.0 * gamma1),
             "neghalfv0overgamma2": -0.5 * table[:, 2] / gamma2,
+            "rc": rc,
+            "acut": acut,
+            "cutoff": rc_list,
         }
-        return {
-            key: to_backend(value, self.backend) for key, value in data.items()
+        result = {
+            name: to_backend(value, self.backend)
+            for name, value in data.items()
         }
+        self._param_cache[key] = result
+        return result
 
-    def energy_arrays(
+    def _emt_terms(
         self,
         positions: Any,
         species: Any,
         table: NeighborPaddedTable,
         cell: Any,
-        pbc: Any,
         params: dict[str, Any],
-    ) -> Any:
-        if table.index.shape[1] == 0:
-            # ASE convention: an atom without neighbours contributes -E0.
-            return -do("sum", params["E0"][species])
-
+        *,
+        with_derivatives: bool,
+    ) -> tuple[Any, Any, Any]:
         index = table.index
         mask = table.mask
+        if index.shape[1] == 0:
+            energy = -do("sum", params["E0"][species])
+            if not with_derivatives:
+                return energy, None, None
+            zeros = do("zeros_like", positions)
+            return energy, zeros, do("zeros", (3, 3), like=positions)
+
+        cutoff = params["cutoff"]
+        rc = params["rc"]
+        acut = params["acut"]
         species_j = species[index]
 
-        # Centre and neighbour parameters, broadcast to (N, 1) and (N, M).
         s0_i = params["s0"][species][:, None]
         eta2_i = params["eta2"][species][:, None]
         kappa_i = params["kappa"][species][:, None]
@@ -179,40 +201,35 @@ class EMT(Potential):
 
         distance = pair_distances(positions, table, cell)
         distance = do("where", mask, distance, 1.0)
-
-        inside = do("logical_and", mask, distance < self.cutoff)
-        weight = 1.0 / (1.0 + do("exp", self.acut * (distance - self.rc)))
+        inside = do("logical_and", mask, distance < cutoff)
+        weight = 1.0 / (1.0 + do("exp", acut * (distance - rc)))
         weight = do("where", inside, weight, 0.0)
 
-        sigma1 = do(
-            "sum",
-            do("exp", -eta2_j * (distance - beta * s0_j)) * chi * weight,
-            axis=-1,
-        )
+        exp_eta_j = do("exp", -eta2_j * (distance - beta * s0_j))
+        sigma1 = do("sum", exp_eta_j * chi * weight, axis=-1)
         has_neighbor = do("any", inside, axis=-1)
-
         inv12gamma1 = params["inv12gamma1"][species]
         sigma1_safe = do("where", has_neighbor, sigma1, 1.0)
-        ds = -do("log", sigma1_safe * inv12gamma1) / (beta * eta2_i[:, 0])
+        ds = -do("log", sigma1_safe * inv12gamma1) / (
+            beta * eta2_i[:, 0]
+        )
         ds = ds[:, None]
 
-        e_embedding = e0_i * (1.0 + lam_i * ds) * do(
-            "exp", -lam_i * ds
-        ) + 6.0 * v0_i * do("exp", -kappa_i * ds)
+        exp_lam = do("exp", -lam_i * ds)
+        exp_kappa = do("exp", -kappa_i * ds)
+        e_embedding = e0_i * (1.0 + lam_i * ds) * exp_lam + (
+            6.0 * v0_i * exp_kappa
+        )
+
         nhalf_i = params["neghalfv0overgamma2"][species][:, None]
         nhalf_j = params["neghalfv0overgamma2"][species_j]
-        e_pair = 0.5 * do(
-            "sum",
-            nhalf_i
-            * do("exp", -kappa_j * (distance / beta - s0_j))
-            * chi
-            * weight
-            + nhalf_j
-            * do("exp", -kappa_i * (distance / beta - s0_i))
-            / chi
-            * weight,
-            axis=-1,
-        )
+        es = nhalf_i * do(
+            "exp", -kappa_j * (distance / beta - s0_j)
+        ) * chi * weight
+        eo = nhalf_j * do(
+            "exp", -kappa_i * (distance / beta - s0_i)
+        ) / chi * weight
+        e_pair = 0.5 * do("sum", es + eo, axis=-1)
 
         energy = do(
             "where",
@@ -220,4 +237,117 @@ class EMT(Potential):
             e_embedding[:, 0] + e_pair - e0_i[:, 0],
             -e0_i[:, 0],
         )
-        return do("sum", energy)
+        energy = do("sum", energy)
+        if not with_derivatives:
+            return energy, None, None
+
+        dw_dr_over_w = acut * (weight - 1.0)
+        dw_dr_over_w = do("where", inside, dw_dr_over_w, 0.0)
+        exp_eta_i = do("exp", -eta2_i * (distance - beta * s0_i))
+        dsigma1s = exp_eta_j * chi * weight * (
+            dw_dr_over_w - eta2_j
+        )
+        dsigma1o = exp_eta_i / chi * weight * (
+            dw_dr_over_w - eta2_i
+        )
+        dE_dds = -e0_i * lam_i * lam_i * ds * exp_lam - (
+            6.0 * v0_i * kappa_i * exp_kappa
+        )
+        dE_dsigma1 = dE_dds / (
+            -beta * eta2_i * sigma1_safe[:, None]
+        )
+        dE_dsigma1_i = dE_dsigma1[:, 0]
+        dE_dsigma1_j = dE_dsigma1_i[index]
+        embedding_derivative = (
+            dE_dsigma1_i[:, None] * dsigma1s
+            + dE_dsigma1_j * dsigma1o
+        )
+        pair_derivative = es * (dw_dr_over_w - kappa_j / beta) + eo * (
+            dw_dr_over_w - kappa_i / beta
+        )
+        derivative = do(
+            "where", inside, embedding_derivative + pair_derivative, 0.0
+        )
+        coefficient = do("where", inside, derivative / distance, 0.0)
+        vectors = pair_vectors(positions, table, cell)
+        forces = do("sum", coefficient[:, :, None] * vectors, axis=1)
+        virial = 0.5 * do(
+            "einsum", "nm,nmi,nmj->ij", coefficient, vectors, vectors
+        )
+        # ``cell`` is only used for periodic stress; the caller validates it.
+        volume = do("abs", do("linalg.det", cell))
+        stress = virial / volume
+        return energy, forces, stress
+
+    def energy_arrays(
+        self,
+        positions: Any,
+        species: Any,
+        table: NeighborPaddedTable,
+        cell: Any,
+        pbc: Any,
+        params: dict[str, Any],
+    ) -> Any:
+        energy, _, _ = self._emt_terms(
+            positions,
+            species,
+            table,
+            cell,
+            params,
+            with_derivatives=False,
+        )
+        return energy
+
+    def evaluate_arrays(  # type: ignore[override]
+        self,
+        positions: Any,
+        species: Any,
+        table: NeighborPaddedTable,
+        cell: Any,
+        pbc: Any,
+        params: dict[str, Any],
+        *,
+        want: tuple[str, ...] = ("energy", "forces", "stress"),
+    ) -> dict[str, Any]:
+        energy, forces, stress = self._emt_terms(
+            positions,
+            species,
+            table,
+            cell,
+            params,
+            with_derivatives=True,
+        )
+        out: dict[str, Any] = {}
+        if "energy" in want:
+            out["energy"] = energy
+        if "forces" in want:
+            out["forces"] = forces
+        if "stress" in want:
+            out["stress"] = stress
+        return out
+
+    def forces_arrays(  # type: ignore[override]
+        self,
+        positions: Any,
+        species: Any,
+        table: NeighborPaddedTable,
+        cell: Any,
+        pbc: Any,
+        params: dict[str, Any],
+    ) -> Any:
+        return self.evaluate_arrays(
+            positions, species, table, cell, pbc, params, want=("forces",)
+        )["forces"]
+
+    def stress_arrays(  # type: ignore[override]
+        self,
+        positions: Any,
+        species: Any,
+        table: NeighborPaddedTable,
+        cell: Any,
+        pbc: Any,
+        params: dict[str, Any],
+    ) -> Any:
+        return self.evaluate_arrays(
+            positions, species, table, cell, pbc, params, want=("stress",)
+        )["stress"]

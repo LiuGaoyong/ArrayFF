@@ -8,7 +8,7 @@ from ase.build import bulk
 from ase.calculators.emt import EMT as AseEMT
 from ase.calculators.lj import LennardJones as AseLJ
 
-from arrayff.calculators import EMTCalculator
+from arrayff.potentials import EMTCalculator
 from arrayff.potentials import EMT, LennardJones
 
 

@@ -49,11 +49,11 @@ def test_surface_relaxation_force_is_nonzero():
 
 @pytest.mark.parametrize("backend", ["torch", "jax", "advect"])
 def test_backends_agree(backend):
+    pytest.importorskip(backend)
     if backend == "jax":
         from arrayff.utils import enable_x64
 
         enable_x64()
-    pytest.importorskip(backend)
     atoms = bulk("Cu", "fcc", a=3.6, cubic=True).repeat((2, 2, 2))
     reference = EMT().energy_and_forces(atoms)
     energy, forces = EMT(backend=backend).energy_and_forces(atoms)

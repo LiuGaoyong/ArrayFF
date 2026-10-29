@@ -63,11 +63,14 @@ def to_backend(array: Any, backend: str) -> Any:
 
         return np.asarray(array)
     if backend == "torch":
+        import numpy as np
         import torch
 
         if isinstance(array, torch.Tensor):
             return array
-        return torch.as_tensor(array)
+        # Go through numpy so Python floats keep float64 instead of torch's
+        # float32 default (important for scalar kernel parameters).
+        return torch.as_tensor(np.asarray(array))
     if backend == "jax":
         import jax.numpy as jnp
 

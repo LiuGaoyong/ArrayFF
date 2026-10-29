@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from arrayff.ad import (
+from arrayff.utils.ad import (
     grad,
     jacrev,
     jvp,

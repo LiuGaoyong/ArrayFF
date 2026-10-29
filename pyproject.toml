@@ -25,29 +25,24 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "ase",
-    "autoray",
     "numpy>=2,<3",
+    "advect>=0.3,<0.4; python_version < '3.16'",
+    "ase>=3.23",
+    "autoray>=0.6",
     "scipy>=1.10,<2",
     "scikit-learn>=1.5",
-    "array-api-compat>=1.10",
-    "array_api-extra>=0.10",
-    "types-array-api>=1.0",
-    "typing-extensions",
-    "vesin",
 ]
 
 [project.optional-dependencies]
 torch = ["torch>=2.3"]
 jax = ["jax>=0.5"]
-numpy-ad = ["advect>=0.3,<0.4; python_version < '3.16'"]
+builders = ["vesin", "matscipy", "pymatgen"]
 
 [dependency-groups]
 dev = [
     "ruff>=0.11",
     "pymatgen>=2023.6",
     "array-api-strict>=2.5", # for test
-    "advect>=0.3,<0.4; python_version < '3.16'", # numpy backend autodiff
     "pytest>=8.3",
     "pytest-xdist",
     "jupyterlab",

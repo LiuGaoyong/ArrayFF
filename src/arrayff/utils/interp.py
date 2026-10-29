@@ -6,6 +6,9 @@ index derived from a traced value, so for that backend the lookup is wrapped
 in a custom primitive with an explicit JVP/transpose (the slope of the linear
 segment). Torch and JAX use plain advanced indexing, which they already
 differentiate correctly.
+
+``interp_rows_with_slope`` returns the value and the analytic slope of the
+piecewise-linear interpolant, for the EAM analytic force path (Q5=A).
 """
 
 from __future__ import annotations
@@ -17,7 +20,7 @@ import numpy as np
 from arrayff.utils.backend import infer_backend
 from arrayff.utils.dispatch import do, to_backend
 
-__all__ = ["interp_rows"]
+__all__ = ["interp_rows", "interp_rows_with_slope"]
 
 _ADVECT_INTERP = None
 
@@ -58,6 +61,20 @@ def _advect_interp():
     return interp
 
 
+def _prepare(table: np.ndarray, backend: str) -> np.ndarray:
+    if backend == "numpy":
+        return table
+    return to_backend(table, backend)
+
+
+def _table_index(x: Any, table: np.ndarray, x0: float, dx: float):
+    u = (x - x0) / dx
+    last = table.shape[1] - 2
+    k = do("clip", do("astype", do("floor", u), "int32"), 0, last)
+    f = u - k
+    return k, f
+
+
 def interp_rows(
     table: np.ndarray,
     rows: Any,
@@ -72,7 +89,8 @@ def interp_rows(
     """
     if table.ndim != 2 or table.shape[1] < 2:
         raise ValueError("interp_rows expects a (R, T>=2) table")
-    if infer_backend(x) == "advect":
+    backend = infer_backend(x)
+    if backend == "advect":
         interp = _advect_interp()
         return interp(
             x,
@@ -82,12 +100,28 @@ def interp_rows(
             dx=float(dx),
         )
 
-    backend = infer_backend(x)
-    table = table if backend == "numpy" else to_backend(table, backend)
-    u = (x - x0) / dx
-    last = table.shape[1] - 2
-    k = do("clip", do("astype", do("floor", u), "int32"), 0, last)
-    f = u - k
+    table = _prepare(table, backend)
+    k, f = _table_index(x, table, x0, dx)
     low = table[rows, k]
     high = table[rows, k + 1]
     return low * (1.0 - f) + high * f
+
+
+def interp_rows_with_slope(
+    table: np.ndarray,
+    rows: Any,
+    x: Any,
+    x0: float,
+    dx: float,
+) -> tuple[Any, Any]:
+    """Return ``(value, d value / d x)`` for the linear interpolant."""
+    if table.ndim != 2 or table.shape[1] < 2:
+        raise ValueError("interp_rows_with_slope expects a (R, T>=2) table")
+    backend = infer_backend(x)
+    table = _prepare(table, backend)
+    k, f = _table_index(x, table, x0, dx)
+    low = table[rows, k]
+    high = table[rows, k + 1]
+    value = low * (1.0 - f) + high * f
+    slope = (high - low) / dx
+    return value, slope

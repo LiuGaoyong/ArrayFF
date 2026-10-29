@@ -1,4 +1,4 @@
-"""Torch wrapper for the effective medium theory potential."""
+"""Optional torch wrapper for the effective medium theory potential."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 import torch
 from torch import nn
 
-from arrayff.nn.base import TorchPotential
+from arrayff.potentials._torch import TorchPotential
 from arrayff.potentials.emt.emt import EMT
 
 __all__ = ["EMTTorch"]

@@ -58,6 +58,8 @@ class LennardJones(PairwisePotential):
         max_neighbors: int | None = None,
         builder: str = "sklearn",
         skin: float = 0.0,
+        jit: bool = False,
+        method: str = "analytic",
     ) -> None:
         self.kim = sigma is None and epsilon is None
         if self.kim:
@@ -91,6 +93,8 @@ class LennardJones(PairwisePotential):
             max_neighbors=max_neighbors,
             builder=builder,
             skin=skin,
+            jit=jit,
+            method=method,
         )
         self.sigma = sigma
         self.epsilon = epsilon
