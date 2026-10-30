@@ -1,5 +1,10 @@
 # ArrayFF
 
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/arrayff.svg)](https://anaconda.org/conda-forge/arrayff)
+[![Conda Downloads](https://img.shields.io/conda/dn/conda-forge/arrayff.svg)](https://anaconda.org/conda-forge/arrayff)
+[![Pypi version](https://img.shields.io/pypi/v/arrayff)](https://pypi.org/project/arrayff/)
+[![PyPI Downloads](https://static.pepy.tech/badge/arrayff)](https://pepy.tech/projects/arrayff)
+
 The Force Field Library Based on Multiple Array Backends like NumPy, PyTorch
 and JAX.
 
@@ -28,17 +33,17 @@ from arrayff.potentials import EMT, EMTCalculator
 
 atoms = bulk("Cu", "fcc", a=3.6, cubic=True).repeat((2, 2, 2))
 
-calc = EMT()                       # numpy backend + autograd for forces
+calc = EMT()  # numpy backend + autograd for forces
 energy, forces = calc.energy_and_forces(atoms, method="analytic")
 
-atoms.calc = EMTCalculator()       # ASE calculator interface
+atoms.calc = EMTCalculator()  # ASE calculator interface
 energy = atoms.get_potential_energy()
 ```
 
 Backends are selected at construction:
 
 ```python
-calc = EMT(backend="torch")        # or "jax"
+calc = EMT(backend="torch")  # or "jax"
 calc = EMT(backend="jax", jit=True)
 ```
 
@@ -66,7 +71,7 @@ PyTorch are the useful backends; NumPy's compiler is best-effort).
 from arrayff.electrostatics import QEq
 
 qeq = QEq(chi={8: 8.5, 1: 4.5}, J={8: 10.0, 1: 12.0}, shielding=1.0)
-charges = qeq.charges(atoms)       # sum == total charge
+charges = qeq.charges(atoms)  # sum == total charge
 
 # additive composite: energy/forces/stress add, charges come from QEq
 composite = LennardJones(cutoff=8.0, sigma=3.405, epsilon=0.01032) + qeq
@@ -81,7 +86,7 @@ QEq supports `charge_response="frozen"` (Hellmann-Feynman, default) and
 ```python
 from arrayff.potentials import LJTorch
 
-model = LJTorch(species=[18])           # epsilon/sigma trainable
+model = LJTorch(species=[18])  # epsilon/sigma trainable
 loss = (model(atoms) - target_energy) ** 2
 loss.backward()
 ```
