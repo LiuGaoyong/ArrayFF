@@ -1,3 +1,4 @@
+import dataclasses as dc
 from copy import deepcopy
 
 from ase import Atoms
@@ -7,6 +8,7 @@ from ase.mep.neb import DyNEB
 from ._helper import OptimizationResult, call_optimization
 
 
+@dc.dataclass(frozen=True)
 class NEBResult(OptimizationResult):
     nimages: int
 
@@ -101,12 +103,17 @@ def call_neb_raw(
     )
     if method4interpolate is not None:
         neb.interpolate(method=method4interpolate)
-    return call_optimization(
+    result = call_optimization(
         neb,  # type: ignore
         calc,
         method=method4opt,
         max_steps=max_steps,
         fmax=fmax,
+    )
+    return NEBResult(
+        lst=result.lst,
+        converged=result.converged,
+        nimages=len(images),
     )
 
 

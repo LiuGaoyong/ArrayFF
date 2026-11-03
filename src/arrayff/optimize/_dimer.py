@@ -30,6 +30,7 @@ def call_dimer_displace(
         mask=mask,
         parse_mask_from_atoms=parse_mask_from_atoms,
         max_steps=2,
+        **kwargs,
     )
     return res.lst[1].positions - res.lst[0].positions
 
@@ -87,6 +88,7 @@ def call_dimer(
     assert atoms.calc is not None, "Please set calculator."
 
     param: dict[str, Any] = kwargs.copy()
+    param.setdefault("logfile", "-")
     param.update({"mask": mask})
     if displacement is not None:
         param["initial_eigenmode_method"] = "displacement"
@@ -103,7 +105,7 @@ def call_dimer(
     converged = False
 
     # run dimer
-    with DimerControl(**(param | kwargs)) as d_control:
+    with DimerControl(**param) as d_control:
         d_atoms = MinModeAtoms(atoms, d_control)
         d_atoms.displace(displacement_vector=displacement)
         with MinModeTranslate(d_atoms, logfile=param["logfile"]) as dim_rlx:

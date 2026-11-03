@@ -119,9 +119,15 @@ def call_optimization(
     try:
         for _ in range(max_steps):
             converged = optimizer.run(steps=1, fmax=fmax)
-            if np.any(np.isinf(atoms.positions)):
+            # Check for infinite/NaN positions (handle both Atoms and NEB)
+            if hasattr(atoms, "images"):
+                arr = [img.positions for img in atoms.images]  # type: ignore
+                positions = np.concatenate(arr)
+            else:
+                positions = atoms.positions
+            if np.any(np.isinf(positions)):
                 raise RuntimeError(_ERR_MSG)
-            if np.any(np.isnan(atoms.positions)):
+            if np.any(np.isnan(positions)):
                 raise RuntimeError(_ERR_MSG)
             if converged:
                 break
