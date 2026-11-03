@@ -8,7 +8,7 @@ Repository = "https://github.com/LiuGaoyong/ArrayFF"
 Issues = "https://github.com/LiuGaoyong/ArrayFF/issues/"
 [project]
 name = "arrayff"
-version = "0.0.1"
+version = "0.0.2"
 readme = "README.md"
 description = "The Force Field Library Based on Multiple Array Backends like NumPy, PyTorch and JAX."
 authors = [{ name = "LiuGaoyong", email = "liugaoyong_88@163.com" }]
